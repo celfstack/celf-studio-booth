@@ -3,7 +3,7 @@
 // never import it at SSR render time except as dead code behind handlers.
 
 export type PresetId = "booth";
-export type PrintLook = "booth" | "dreamy";
+export type PrintLook = "booth" | "dreamy" | "vintageColor" | "coolMono";
 
 /** Strip border styles: all keep the celfstudio footer mark. */
 export type BorderStyle = "classic" | "thick" | "none";
@@ -67,20 +67,7 @@ const PHOTO_H = Math.round(PHOTO_W / PHOTO_RATIO); // 801
 const BOTTOM = STRIP_H - TOP - PHOTO_H * 4 - GAP * 3; // wider bottom border
 const PIXELS_PER_INCH = 600;
 
-const MONTHS = [
-  "JAN",
-  "FEB",
-  "MAR",
-  "APR",
-  "MAY",
-  "JUN",
-  "JUL",
-  "AUG",
-  "SEP",
-  "OCT",
-  "NOV",
-  "DEC",
-];
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
 export function stripDateLabel(now = new Date()): string {
   return `${MONTHS[now.getMonth()]} ${String(now.getDate()).padStart(2, "0")} ${now.getFullYear()}`;
@@ -115,9 +102,7 @@ async function decodeViaImg(blob: Blob): Promise<HTMLImageElement> {
  * Tries the native decoder first; falls back to heic2any for HEIC/HEIF
  * in browsers without native HEIC support.
  */
-export async function decodePhoto(
-  file: File,
-): Promise<ImageBitmap | HTMLImageElement> {
+export async function decodePhoto(file: File): Promise<ImageBitmap | HTMLImageElement> {
   try {
     return await createImageBitmap(file);
   } catch {
@@ -143,10 +128,7 @@ export async function decodePhoto(
 }
 
 /** Small square thumbnail data URL for the upload slot preview. */
-export function makeThumbnail(
-  source: ImageBitmap | HTMLImageElement,
-  size = 480,
-): string {
+export function makeThumbnail(source: ImageBitmap | HTMLImageElement, size = 480): string {
   const sw = source.width;
   const sh = source.height;
   const side = Math.min(sw, sh);
@@ -187,12 +169,7 @@ function drawCover(
 }
 
 // Film grain
-function addGrain(
-  ctx: CanvasRenderingContext2D,
-  w: number,
-  h: number,
-  amount: number,
-) {
+function addGrain(ctx: CanvasRenderingContext2D, w: number, h: number, amount: number) {
   const imgData = ctx.getImageData(0, 0, w, h);
   const d = imgData.data;
   for (let i = 0; i < d.length; i += 4) {
@@ -205,12 +182,7 @@ function addGrain(
 }
 
 // Warm-dark radial vignette
-function addVignette(
-  ctx: CanvasRenderingContext2D,
-  w: number,
-  h: number,
-  strength: number,
-) {
+function addVignette(ctx: CanvasRenderingContext2D, w: number, h: number, strength: number) {
   const g = ctx.createRadialGradient(
     w / 2,
     h / 2,
@@ -413,6 +385,110 @@ function applyDreamyColor(
   addVignette(ctx, w, h, 0.18);
 }
 
+// Punchy color film with the slightly muted palette, hard flash and worn
+// texture of a well-loved late-90s point-and-shoot print.
+function applyVintageFlashColor(
+  ctx: CanvasRenderingContext2D,
+  img: ImageBitmap | HTMLImageElement,
+  w: number,
+  h: number,
+) {
+  ctx.save();
+  ctx.filter = "brightness(1.06) contrast(1.3) saturate(.9) sepia(.13)";
+  drawCover(ctx, img, w, h);
+  ctx.restore();
+
+  // A broad frontal-flash lift keeps faces bright while the corners retain
+  // the dense contrast of old consumer film.
+  const flash = ctx.createRadialGradient(
+    w * 0.5,
+    h * 0.38,
+    0,
+    w * 0.5,
+    h * 0.38,
+    Math.max(w, h) * 0.62,
+  );
+  flash.addColorStop(0, "rgba(255,244,221,.16)");
+  flash.addColorStop(0.46, "rgba(255,224,194,.055)");
+  flash.addColorStop(1, "rgba(255,214,181,0)");
+  ctx.fillStyle = flash;
+  ctx.fillRect(0, 0, w, h);
+
+  addBloom(ctx, w, h, w * 0.0045, 0.12, "brightness(1.08)");
+  addGrain(ctx, w, h, 0.068);
+  addPrintWear(ctx, w, h, false);
+  addVignette(ctx, w, h, 0.25);
+}
+
+// Cooler silver-gelatin style monochrome: bright direct flash, deep charcoal
+// shadows, visible grain and just enough scratches to feel physically worn.
+function applyCoolFlashMono(
+  ctx: CanvasRenderingContext2D,
+  img: ImageBitmap | HTMLImageElement,
+  w: number,
+  h: number,
+) {
+  ctx.save();
+  ctx.filter = "brightness(1.075) contrast(1.26) grayscale(1)";
+  drawCover(ctx, img, w, h);
+  ctx.restore();
+
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+  const shadow = [15, 20, 25];
+  const highlight = [239, 244, 246];
+  for (let i = 0; i < data.length; i += 4) {
+    let tone = data[i] / 255;
+    tone = tone * tone * (3 - 2 * tone);
+    tone = Math.max(0, Math.min(1, 0.025 + tone * 1.01));
+    data[i] = shadow[0] + (highlight[0] - shadow[0]) * tone;
+    data[i + 1] = shadow[1] + (highlight[1] - shadow[1]) * tone;
+    data[i + 2] = shadow[2] + (highlight[2] - shadow[2]) * tone;
+  }
+  ctx.putImageData(imageData, 0, 0);
+
+  addBloom(ctx, w, h, w * 0.0055, 0.16, "brightness(1.12)");
+  addGrain(ctx, w, h, 0.082);
+  addPrintWear(ctx, w, h, true);
+  addVignette(ctx, w, h, 0.27);
+}
+
+function addPrintWear(ctx: CanvasRenderingContext2D, w: number, h: number, monochrome: boolean) {
+  ctx.save();
+  for (let i = 0; i < 30; i++) {
+    const x = Math.random() * w;
+    const y = Math.random() * h;
+    const radius = 0.5 + Math.random() * 2.2;
+    const light = Math.random() > 0.42;
+    ctx.fillStyle = light
+      ? `rgba(${monochrome ? "235,242,245" : "250,230,204"},${0.05 + Math.random() * 0.11})`
+      : `rgba(${monochrome ? "16,22,28" : "58,38,27"},${0.035 + Math.random() * 0.075})`;
+    ctx.beginPath();
+    ctx.ellipse(
+      x,
+      y,
+      radius,
+      radius * (0.45 + Math.random()),
+      Math.random() * Math.PI,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+  for (let i = 0; i < 6; i++) {
+    const x = Math.random() * w;
+    ctx.strokeStyle = monochrome
+      ? `rgba(238,244,246,${0.035 + Math.random() * 0.045})`
+      : `rgba(255,235,211,${0.025 + Math.random() * 0.035})`;
+    ctx.lineWidth = 0.5 + Math.random() * 1.2;
+    ctx.beginPath();
+    ctx.moveTo(x, Math.random() * h * 0.18);
+    ctx.lineTo(x + (Math.random() - 0.5) * 8, h * (0.35 + Math.random() * 0.58));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // ---------------------------------------------------------------- strip
 
 export interface RenderedStrip {
@@ -425,9 +501,10 @@ export interface RenderedStrip {
 function getStripGeometry(border: BorderStyle) {
   const spec = BORDER_SPECS[border];
   const photoW = STRIP_W - spec.side * 2;
-  const photoH = border === "none"
-    ? Math.floor((STRIP_H - 132 - spec.gap * 3) / 4)
-    : Math.round(photoW / PHOTO_RATIO);
+  const photoH =
+    border === "none"
+      ? Math.floor((STRIP_H - 132 - spec.gap * 3) / 4)
+      : Math.round(photoW / PHOTO_RATIO);
   const bottom = STRIP_H - spec.top - photoH * 4 - spec.gap * 3;
   return { spec, photoW, photoH, bottom };
 }
@@ -563,6 +640,8 @@ export async function renderStrip(
     wctx.clearRect(0, 0, photoW, photoH);
     wctx.imageSmoothingQuality = "high";
     if (look === "dreamy") applyDreamyColor(wctx, src, photoW, photoH);
+    else if (look === "vintageColor") applyVintageFlashColor(wctx, src, photoW, photoH);
+    else if (look === "coolMono") applyCoolFlashMono(wctx, src, photoW, photoH);
     else applyBoothFilm(wctx, src, photoW, photoH);
     wctx.restore();
 
@@ -572,9 +651,7 @@ export async function renderStrip(
     // rotation and offset, different for every frame (skipped edge-to-edge).
     const jitterX = spec.jitter ? (Math.random() - 0.5) * 6 : 0;
     const jitterY = spec.jitter ? (Math.random() - 0.5) * 4 : 0;
-    const tilt = spec.jitter
-      ? ((Math.random() - 0.5) * 0.5 * Math.PI) / 180
-      : 0;
+    const tilt = spec.jitter ? ((Math.random() - 0.5) * 0.5 * Math.PI) / 180 : 0;
     ctx.save();
     ctx.translate(spec.side + photoW / 2 + jitterX, y + photoH / 2 + jitterY);
     ctx.rotate(tilt);
