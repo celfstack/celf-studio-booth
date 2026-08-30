@@ -1143,7 +1143,7 @@ function Decorate() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1500px] gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-8 lg:px-7 lg:py-8">
+      <div className="mx-auto grid max-w-[1500px] gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(460px,520px)] lg:gap-5 lg:px-7 lg:py-4">
         <section className="flex min-h-[62dvh] items-center justify-center rounded-[28px] border border-ink/10 bg-[#e8e0d3] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.8)] sm:p-8 lg:sticky lg:top-24 lg:h-[calc(100dvh-8rem)]">
           {ready ? (
             <div className="flex max-h-full max-w-full flex-col items-center gap-3">
@@ -1168,7 +1168,7 @@ function Decorate() {
           ) : <p className="font-hand text-2xl text-ink-soft">setting the table…</p>}
         </section>
 
-        <aside className="space-y-3 pb-10">
+        <aside className="space-y-3 pb-10 lg:grid lg:grid-cols-2 lg:content-start lg:gap-2 lg:space-y-0 lg:pb-0">
           <EditorSection number="01" title="Choose the canvas">
             <div className="grid grid-cols-2 gap-2">
               {FORMATS.map((item) => <ChoiceButton key={item.id} active={formatId === item.id} onClick={() => setFormatId(item.id)} label={item.label} detail={item.detail} />)}
@@ -1205,7 +1205,7 @@ function Decorate() {
             )}
           </EditorSection>
 
-          <EditorSection number="03" title="Frame the strip">
+          <EditorSection number="03" title="Frame the strip" className="lg:col-span-2">
             <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Photo border style">
               {BORDER_OPTIONS.map((item) => (
                 <button
@@ -1238,7 +1238,7 @@ function Decorate() {
           </EditorSection>
 
           <EditorSection number="05" title="Pick some paper">
-            <div className="grid grid-cols-8 gap-2">
+            <div className="grid grid-cols-8 gap-1.5">
               {BACKDROPS.map((item) => (
                 <button
                   key={item.id}
@@ -1269,8 +1269,8 @@ function Decorate() {
             </div>
           </EditorSection>
 
-          <EditorSection number="06" title="Choose a finish">
-            <div className="grid grid-cols-2 gap-2">
+          <EditorSection number="06" title="Choose a finish" className="lg:col-span-2">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
               {DECORATIONS.map((item) => (
                 <button
                   key={item.id}
@@ -1300,13 +1300,13 @@ function Decorate() {
                       }
                     }
                   }}
-                  className={`flex min-h-[76px] items-center gap-2.5 overflow-hidden rounded-xl border p-2.5 text-left transition hover:-translate-y-0.5 ${
+                  className={`flex min-h-[76px] items-center gap-2.5 overflow-hidden rounded-xl border p-2.5 text-left transition hover:-translate-y-0.5 lg:min-h-[62px] lg:gap-2 lg:p-2 ${
                     (item.id === "none" ? decorations.length === 0 : decorations.includes(item.id))
                       ? "border-rust bg-rust/5 shadow-[inset_0_0_0_1px_#a03d2e]"
                       : "border-ink/15 bg-white/45 hover:border-ink/35"
                   }`}
                 >
-                  <span className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg ${item.id === "lace" ? "bg-[#684a43]" : "bg-[#e8e1d6]"}`}>
+                  <span className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg lg:h-10 lg:w-10 ${item.id === "lace" ? "bg-[#684a43]" : "bg-[#e8e1d6]"}`}>
                     {(item.previewSrc ?? item.src) ? (
                       <img src={item.previewSrc ?? item.src} alt="" className="h-full w-full object-contain" />
                     ) : (
@@ -1321,18 +1321,18 @@ function Decorate() {
             </div>
           </EditorSection>
 
-          <button type="button" onClick={() => void save()} disabled={!ready || saving || borderRendering} className="w-full rounded-2xl bg-ink px-6 py-4 text-base font-semibold text-paper shadow-[0_12px_30px_-16px_rgba(42,36,30,.7)] transition hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40">Save image</button>
-          <p className="font-type text-center text-[10px] uppercase tracking-[.12em] text-ink-soft">Made privately in your browser</p>
+          <button type="button" onClick={() => void save()} disabled={!ready || saving || borderRendering} className="w-full rounded-2xl bg-ink px-6 py-3 text-base font-semibold text-paper shadow-[0_12px_30px_-16px_rgba(42,36,30,.7)] transition hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 lg:col-span-2">Save image</button>
+          <p className="font-type text-center text-[10px] uppercase tracking-[.12em] text-ink-soft lg:col-span-2">Made privately in your browser</p>
         </aside>
       </div>
     </main>
   );
 }
 
-function EditorSection({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
+function EditorSection({ number, title, children, className = "" }: { number: string; title: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className="rounded-[22px] border border-ink/10 bg-paper/80 p-4 shadow-[0_8px_28px_-24px_rgba(42,36,30,.6)] sm:p-5">
-      <div className="mb-3 flex items-baseline gap-2"><span className="font-type text-[10px] text-rust">{number}</span><h2 className="font-hand text-xl tracking-[-.2px]">{title}</h2></div>
+    <section className={`rounded-[22px] border border-ink/10 bg-paper/80 p-4 shadow-[0_8px_28px_-24px_rgba(42,36,30,.6)] sm:p-5 lg:rounded-[18px] lg:p-3 ${className}`}>
+      <div className="mb-3 flex items-baseline gap-2 lg:mb-2"><span className="font-type text-[10px] text-rust">{number}</span><h2 className="font-hand text-xl tracking-[-.2px] lg:text-lg">{title}</h2></div>
       {children}
     </section>
   );
@@ -1340,8 +1340,8 @@ function EditorSection({ number, title, children }: { number: string; title: str
 
 function ChoiceButton({ active, onClick, label, detail }: { active: boolean; onClick: () => void; label: string; detail: string }) {
   return (
-    <button type="button" onClick={onClick} className={`rounded-xl border p-3 text-left transition ${active ? "border-rust bg-rust/5 shadow-[inset_0_0_0_1px_#a03d2e]" : "border-ink/15 bg-white/45 hover:border-ink/35"}`}>
-      <span className="font-hand block text-lg leading-tight">{label}</span><span className="font-type mt-1 block text-[10px] text-ink-soft">{detail}</span>
+    <button type="button" onClick={onClick} className={`rounded-xl border p-3 text-left transition lg:p-2.5 ${active ? "border-rust bg-rust/5 shadow-[inset_0_0_0_1px_#a03d2e]" : "border-ink/15 bg-white/45 hover:border-ink/35"}`}>
+      <span className="font-hand block text-lg leading-tight lg:text-base">{label}</span><span className="font-type mt-1 block text-[10px] text-ink-soft lg:text-[9px]">{detail}</span>
     </button>
   );
 }
