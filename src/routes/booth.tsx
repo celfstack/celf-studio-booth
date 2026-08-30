@@ -1,6 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { makeThumbnail } from "../lib/strip/render";
+import {
+  decodePhoto,
+  isSupportedPhotoFile,
+  makeThumbnail,
+} from "../lib/strip/render";
 import { setSessionPhotos } from "../lib/strip/session";
 
 export const Route = createFileRoute("/booth")({
@@ -21,6 +25,7 @@ type Phase = "entering" | "ready" | "shooting" | "leaving";
 function Booth() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const shotsRef = useRef<ImageBitmap[]>([]);
   const [phase, setPhase] = useState<Phase>("entering");
@@ -28,6 +33,8 @@ function Booth() {
   const [count, setCount] = useState<number | null>(null);
   const [flash, setFlash] = useState(false);
   const [thumbs, setThumbs] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Start the camera and open the curtain on mount.
   useEffect(() => {
@@ -119,8 +126,52 @@ function Booth() {
     void navigate({ to: "/print" });
   }, [capture, navigate, phase]);
 
+  const uploadPhotos = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const input = event.currentTarget;
+      const files = Array.from(input.files ?? []);
+      input.value = "";
+      setUploadError(null);
+
+      if (files.length !== 4) {
+        setUploadError("Choose exactly four photos at once.");
+        return;
+      }
+      if (files.some((file) => !isSupportedPhotoFile(file))) {
+        setUploadError("Use JPG, PNG, HEIC, or HEIF photos.");
+        return;
+      }
+
+      setUploading(true);
+      const decoded: Array<ImageBitmap | HTMLImageElement> = [];
+      try {
+        for (const file of files) decoded.push(await decodePhoto(file));
+        shotsRef.current.forEach((photo) => photo.close());
+        shotsRef.current = decoded.filter(
+          (photo): photo is ImageBitmap => photo instanceof ImageBitmap,
+        );
+        setThumbs(decoded.map((photo) => makeThumbnail(photo)));
+        setPhase("leaving");
+        setSessionPhotos(decoded);
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        await sleep(prefersReducedMotion() ? 100 : 450);
+        void navigate({ to: "/print" });
+      } catch {
+        decoded.forEach((photo) => {
+          if (photo instanceof ImageBitmap) photo.close();
+        });
+        setUploadError(
+          "One of those photos could not be opened. Try another set.",
+        );
+        setUploading(false);
+      }
+    },
+    [navigate],
+  );
+
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-[#211b15] px-4 py-10">
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-[#211b15] px-4 py-6">
       {/* booth faceplate */}
       <div className="w-full max-w-lg rounded-[28px] bg-paper p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)] sm:p-7">
         {/* look-here sign */}
@@ -238,12 +289,36 @@ function Booth() {
         </div>
       </div>
 
-      <Link
-        to="/"
-        className="font-hand mt-6 text-lg text-paper/60 transition-colors duration-200 hover:text-paper"
-      >
-        &#8592; sneak back out
-      </Link>
+      <div className="mt-4 flex w-full max-w-lg items-center justify-between gap-6 px-1">
+        <Link
+          to="/"
+          className="font-hand text-lg text-paper/60 transition-colors duration-200 hover:text-paper"
+        >
+          &#8592; sneak back out
+        </Link>
+        <input
+          ref={uploadRef}
+          type="file"
+          multiple
+          accept=".jpg,.jpeg,.png,.heic,.heif,image/jpeg,image/png,image/heic,image/heif"
+          onChange={(event) => void uploadPhotos(event)}
+          className="sr-only"
+          aria-label="Upload four photos from your device"
+        />
+        <button
+          type="button"
+          onClick={() => uploadRef.current?.click()}
+          disabled={uploading || phase === "shooting" || phase === "leaving"}
+          className="font-hand text-lg text-paper/60 transition-colors duration-200 hover:text-paper disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          {uploading ? "opening photos…" : "upload photos →"}
+        </button>
+      </div>
+      {uploadError ? (
+        <p role="alert" className="mt-3 text-center text-sm text-[#e8b8ae]">
+          {uploadError}
+        </p>
+      ) : null}
     </main>
   );
 }
