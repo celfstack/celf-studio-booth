@@ -1165,7 +1165,7 @@ function Decorate() {
                 </p>
               )}
             </div>
-          ) : <p className="font-hand text-2xl text-ink-soft">setting the table…</p>}
+          ) : <p className="font-hand text-2xl text-ink-soft">loading...</p>}
         </section>
 
         <aside className="space-y-3 pb-10 lg:grid lg:grid-cols-2 lg:content-start lg:gap-2 lg:space-y-0 lg:pb-0">
