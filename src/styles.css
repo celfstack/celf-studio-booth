@@ -1,0 +1,405 @@
+/* Cascade layer order: reset lowest, then Tailwind/Quanta base, then
+ * components and finally utilities — so Quanta's q-* utilities (e.g.
+ * q-button-*) always win over global element resets. */
+@layer reset, theme, base, components, utilities;
+
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where([data-theme="default-dark"], [data-theme="default-dark"] *));
+
+/*
+ * Quanta is the visual source of truth. This file imports Quanta's Tailwind
+ * entry once; that entry brings in primitives, semantic theme variables,
+ * typography, z-index, border-width, and q-* component utilities.
+ *
+ * Generated app layout should use normal Tailwind spacing (`p-4`, `gap-2`,
+ * `mt-6`, `h-10`) and Quanta semantic utilities for color/type
+ * (`bg-q-background-primary`, `text-q-body-md-regular`). Do not use old numeric
+ * token classes such as `px-400` / `gap-200`, and do not reach for raw
+ * q-spacing vars in app code. Quanta component internals own their q-* classes.
+ *
+ * The `--spacing: 0.25rem` restoration keeps native Tailwind layout utilities
+ * stable for generated apps and legacy scaffold components. The inline theme
+ * aliases below keep shadcn-style imports rendering while new UI migrates to
+ * Quanta components.
+ */
+@theme {
+  --spacing: 0.25rem;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--hf-color-background-primary);
+  --color-foreground: var(--hf-color-text-primary);
+  --color-card: var(--hf-color-background-secondary);
+  --color-card-foreground: var(--hf-color-text-primary);
+  --color-popover: var(--hf-color-background-secondary);
+  --color-popover-foreground: var(--hf-color-text-primary);
+  --color-primary: var(--hf-color-button-brand);
+  --color-primary-foreground: var(--hf-color-button-label-brand);
+  --color-secondary: var(--hf-color-background-secondary);
+  --color-secondary-foreground: var(--hf-color-text-primary);
+  --color-muted: var(--hf-color-background-tertiary);
+  --color-muted-foreground: var(--hf-color-text-secondary);
+  --color-accent: var(--hf-color-overlay-hover);
+  --color-accent-foreground: var(--hf-color-text-primary);
+  --color-destructive: var(--hf-color-state-error-bg);
+  --color-destructive-foreground: var(--hf-color-state-error-fg);
+  --color-border: var(--hf-color-border-default);
+  --color-input: var(--hf-color-border-default);
+  --color-ring: var(--hf-color-border-focus);
+  --color-ring-offset-background: var(--hf-color-background-primary);
+
+  --color-chart-1: var(--hf-color-lime-500);
+  --color-chart-2: var(--hf-color-pink-500);
+  --color-chart-3: var(--hf-color-blue-500);
+  --color-chart-4: var(--hf-color-yellow-500);
+  --color-chart-5: var(--hf-color-purple-500);
+
+  --color-sidebar: var(--hf-color-background-secondary);
+  --color-sidebar-foreground: var(--hf-color-text-primary);
+  --color-sidebar-primary: var(--hf-color-button-brand);
+  --color-sidebar-primary-foreground: var(--hf-color-button-label-brand);
+  --color-sidebar-accent: var(--hf-color-overlay-hover);
+  --color-sidebar-accent-foreground: var(--hf-color-text-primary);
+  --color-sidebar-border: var(--hf-color-border-default);
+  --color-sidebar-ring: var(--hf-color-border-focus);
+}
+
+:root {
+  --radius: 0.625rem;
+}
+
+/* ---- Photo Strip Studio brand tokens (design-brief.md) ---- */
+@theme {
+  --color-paper: #faf6ef;
+  --color-paper-deep: #f1ead9;
+  --color-ink: #2a241e;
+  --color-ink-soft: #6f6559;
+  --color-rust: #a03d2e;
+  --color-rust-deep: #86301f;
+  --color-chrome: #c9c4bb;
+  --color-chrome-deep: #8f8a81;
+  --font-display: "Arial Narrow", "Archivo Narrow", Arial, sans-serif;
+  --font-body: "Arial Narrow", "Archivo Narrow", Arial, sans-serif;
+  --font-type: "Courier Prime", "Courier New", monospace;
+  --font-hand: "Arial Narrow", "Archivo Narrow", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    color-scheme: light;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+  }
+
+  * {
+    border-color: color-mix(in srgb, var(--color-ink) 14%, transparent);
+  }
+}
+
+/* Chute delivery: transform-only, gated by prefers-reduced-motion */
+.strip-delivery {
+  transform: translateY(-103%);
+}
+.strip-delivery[data-delivered="true"] {
+  transform: translateY(0);
+  transition: transform 1.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .strip-delivery,
+  .strip-delivery[data-delivered="true"] {
+    transform: translateY(0);
+    transition: none;
+  }
+}
+
+/* Booth curtain: fabric folds, opens left-to-right and gathers at the right */
+.curtain-panel {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0) 14%),
+    repeating-linear-gradient(
+      90deg,
+      #8a684c 0px,
+      #a58161 16px,
+      #6f5138 30px,
+      #8a684c 44px
+    );
+  box-shadow: inset 0 -10px 24px rgba(0, 0, 0, 0.3);
+  transform-origin: right center;
+  transform: scaleX(1);
+}
+.curtain-panel[data-open="true"] {
+  animation: curtain-open 1.7s cubic-bezier(0.7, 0, 0.3, 1) 0.35s forwards;
+}
+@keyframes curtain-open {
+  to {
+    transform: scaleX(0.07);
+  }
+}
+
+/* Gentle float for the doodle stars on the home page */
+@keyframes star-drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(8deg);
+  }
+}
+.doodle-star {
+  animation: star-drift 5s ease-in-out infinite;
+}
+
+/* Homepage print delivery: the developed strip feeds out first, then the
+ * metallic stars arrive in small, irregular pops around its edges. */
+.home-print-stage {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.72), transparent 42%),
+    #fff9e9;
+}
+
+.home-delivery-sign {
+  position: absolute;
+  z-index: 40;
+  top: 3.8%;
+  left: 50%;
+  display: flex;
+  width: 33%;
+  height: 13.6%;
+  transform: translateX(-50%) rotate(-0.35deg);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(42, 36, 30, 0.82);
+  border-radius: 0.2rem 0.5rem 0.25rem 0.4rem;
+  background:
+    linear-gradient(97deg, transparent 0 12%, rgba(42, 36, 30, .035) 12.2% 12.8%, transparent 13% 100%),
+    #faf6eb;
+  box-shadow:
+    3px 3px 0 rgba(42, 36, 30, .16),
+    inset 0 0 0 3px #faf6eb,
+    inset 0 0 0 4px rgba(42, 36, 30, .3);
+  color: var(--color-ink);
+  font-family: var(--font-type);
+  font-size: clamp(.64rem, 1.5vw, 1rem);
+  font-weight: 700;
+  letter-spacing: .14em;
+  line-height: 1.08;
+  text-transform: uppercase;
+}
+
+.home-delivery-sign > span {
+  white-space: nowrap;
+}
+
+.home-delivery-body {
+  position: absolute;
+  z-index: 5;
+  top: 15.8%;
+  left: 50%;
+  width: 46%;
+  height: 77%;
+  transform: translateX(-50%) rotate(.18deg);
+  border: 2px solid rgba(42, 36, 30, .78);
+  border-radius: .2rem .1rem .35rem .15rem;
+  background:
+    repeating-linear-gradient(97deg, rgba(255,255,255,.32) 0 2px, rgba(42,36,30,.035) 2px 4px),
+    linear-gradient(110deg, #e6e2d8 0%, #faf7ef 44%, #d3cec3 72%, #efebe2 100%);
+  box-shadow:
+    .45rem .55rem 0 rgba(42, 36, 30, .1),
+    inset 0 0 0 4px rgba(255,255,255,.5),
+    inset 0 0 0 6px rgba(42,36,30,.13);
+}
+
+.home-delivery-body::after {
+  content: "";
+  position: absolute;
+  inset: -5px 3px 3px -4px;
+  border: 1px solid rgba(42, 36, 30, .33);
+  border-radius: .45rem .1rem .2rem .35rem;
+  pointer-events: none;
+}
+
+.home-delivery-window {
+  position: absolute;
+  inset: 10.5% 14% 6.5%;
+  border: 2px solid rgba(42, 36, 30, .76);
+  border-radius: .15rem .28rem .08rem .25rem;
+  background:
+    linear-gradient(100deg, rgba(255,255,255,.08), transparent 28% 72%, rgba(255,255,255,.06)),
+    #24211d;
+  box-shadow:
+    inset .45rem .45rem 0 rgba(0,0,0,.25),
+    inset -.3rem -.25rem 0 rgba(255,255,255,.05);
+}
+
+.home-delivery-handle {
+  position: absolute;
+  z-index: 2;
+  top: 32%;
+  right: 17.5%;
+  width: 2.6%;
+  height: 43%;
+  border: 1px solid rgba(42, 36, 30, .74);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #605b54, #eee9df 42%, #777169 75%, #d3cec4);
+  box-shadow: 2px 1px 0 rgba(0,0,0,.2);
+}
+
+.home-print-slot {
+  position: absolute;
+  z-index: 30;
+  top: 22.2%;
+  left: 50%;
+  width: 34%;
+  height: 3.9%;
+  transform: translateX(-50%) rotate(-.15deg);
+  border: 1.5px solid rgba(42, 36, 30, 0.74);
+  border-radius: 0.18rem;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.42) 0 2px, rgba(94,88,79,.13) 2px 4px),
+    linear-gradient(180deg, #f1eee6 0%, #aaa69e 48%, #ddd8ce 100%);
+  box-shadow: .12rem .2rem 0 rgba(42, 36, 30, .2);
+}
+
+.home-print-slit {
+  position: absolute;
+  inset: 25% 9%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #080706, #2b2823 72%, #050403);
+  box-shadow: inset 0 2px 3px rgba(255,255,255,.1), 0 1px 0 rgba(255,255,255,.45);
+}
+
+.home-print-screw {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 4.1%;
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  border: 1px solid rgba(55, 50, 44, .5);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f8f5ed 0 15%, #aaa59c 48%, #77736b 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+}
+
+.home-print-screw::after {
+  content: "";
+  position: absolute;
+  top: 16%;
+  bottom: 16%;
+  left: 47%;
+  width: 1px;
+  background: rgba(44, 40, 35, .7);
+}
+
+.home-print-screw-left { left: 3.2%; }
+.home-print-screw-right { right: 3.2%; }
+
+.home-print-track {
+  position: absolute;
+  z-index: 10;
+  top: 24.2%;
+  left: 50%;
+  width: 28%;
+  height: 65.8%;
+  transform: translateX(-50%);
+  overflow: hidden;
+}
+
+.home-print-strip {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: auto;
+  transform: translateY(-101%);
+  transform-origin: top center;
+  filter: drop-shadow(0 1.2rem 1rem rgba(42, 36, 30, .24));
+  animation: home-strip-feed 2.65s cubic-bezier(.2, .76, .28, 1) .28s both;
+}
+
+.home-print-stars {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.home-print-star {
+  position: absolute;
+  height: auto;
+  opacity: 0;
+  filter: drop-shadow(0 .25rem .24rem rgba(42, 36, 30, .23));
+  animation: home-star-pop .52s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes home-strip-feed {
+  0% { opacity: 0; transform: translateY(-101%); }
+  6% { opacity: 1; transform: translateY(-101%); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes home-star-pop {
+  0% { opacity: 0; transform: scale(.1) rotate(-22deg); }
+  72% { opacity: 1; transform: scale(1.16) rotate(8deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* Tiny CSS previews for the decorator's procedural canvas papers. */
+.backdrop-creamDots {
+  background-image: radial-gradient(circle, #2b2926 0 13%, transparent 14%);
+  background-size: 14px 14px;
+}
+.backdrop-cocoaDots {
+  background-image: radial-gradient(circle, #eadfca 0 13%, transparent 14%);
+  background-size: 14px 14px;
+}
+.backdrop-checker {
+  background-image:
+    linear-gradient(45deg, rgba(137, 59, 46, 0.28) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(137, 59, 46, 0.28) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(137, 59, 46, 0.28) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(137, 59, 46, 0.28) 75%);
+  background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+  background-size: 14px 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curtain-panel[data-open="true"] {
+    animation: none;
+    transform: scaleX(0.07);
+  }
+  .doodle-star {
+    animation: none;
+  }
+  .home-print-strip {
+    opacity: 1;
+    transform: translateY(0);
+    animation: none;
+  }
+  .home-print-star {
+    opacity: 1;
+    transform: scale(1);
+    animation: none;
+  }
+}
