@@ -360,7 +360,7 @@ function applyDreamyColor(
   h: number,
 ) {
   ctx.save();
-  ctx.filter = "brightness(1.055) contrast(1.12) saturate(1.16) sepia(.1)";
+  ctx.filter = "brightness(1.065) contrast(1.22) saturate(1.18) sepia(.1)";
   drawCover(ctx, img, w, h);
   ctx.restore();
 
@@ -368,10 +368,10 @@ function applyDreamyColor(
   glow.width = w;
   glow.height = h;
   const glowCtx = glow.getContext("2d")!;
-  glowCtx.filter = `blur(${Math.max(2.5, w * 0.006)}px) brightness(1.09) saturate(1.05)`;
+  glowCtx.filter = `blur(${Math.max(3, w * 0.008)}px) brightness(1.13) saturate(1.07)`;
   glowCtx.drawImage(ctx.canvas, 0, 0);
   ctx.save();
-  ctx.globalAlpha = 0.18;
+  ctx.globalAlpha = 0.27;
   ctx.globalCompositeOperation = "screen";
   ctx.drawImage(glow, 0, 0);
   const wash = ctx.createLinearGradient(0, 0, w, h);

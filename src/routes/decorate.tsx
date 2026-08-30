@@ -120,9 +120,9 @@ const BACKDROPS: Array<{ id: BackdropId; label: string; color: string; src: stri
 
 const EFFECTS: Array<{ id: EffectId; label: string }> = [
   { id: "original", label: "Original B&W" },
+  { id: "coolMono", label: "Cool B&W" },
   { id: "dreamy", label: "Dreamy Color" },
   { id: "vintageColor", label: "Vintage Flash" },
-  { id: "coolMono", label: "Cool Flash B&W" },
 ];
 
 const ALTERNATE_EFFECTS: Array<Exclude<EffectId, "original">> = [
@@ -347,7 +347,7 @@ function drawImageWithEffect(
   effect: EffectId,
 ) {
   ctx.save();
-  if (effect === "dreamy") ctx.filter = "brightness(1.04) contrast(.96) saturate(1.04)";
+  if (effect === "dreamy") ctx.filter = "brightness(1.015) contrast(1.05) saturate(1.03)";
   ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
   ctx.restore();
 }
