@@ -200,9 +200,9 @@ function Booth() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-[#211b15] px-4 py-6">
       {/* booth faceplate */}
-      <div className="w-full max-w-lg rounded-[28px] bg-paper p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)] sm:p-7">
+      <div className="relative w-full max-w-lg rounded-[28px] bg-paper p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)] sm:p-7">
         {/* look-here sign */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-center">
           <div className="flex w-fit items-center gap-2.5 rounded-full border border-ink/20 px-4 py-2">
             <span className="font-type text-[10px] font-bold tracking-[0.18em] text-ink uppercase">
               Look here
@@ -215,19 +215,6 @@ function Booth() {
               Smile
             </span>
           </div>
-          <button
-            type="button"
-            aria-pressed={flashEnabled}
-            onClick={() => setFlashEnabled((enabled) => !enabled)}
-            disabled={phase === "shooting" || phase === "leaving"}
-            className={`font-hand shrink-0 rounded-full border px-3 py-1.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${
-              flashEnabled
-                ? "border-ink bg-ink text-paper"
-                : "border-ink/25 bg-white/45 text-ink hover:border-ink/50"
-            }`}
-          >
-            flash {flashEnabled ? "on ✦" : "off"}
-          </button>
         </div>
 
         {/* the square + curtain */}
@@ -326,6 +313,20 @@ function Booth() {
             </span>
           </button>
         </div>
+
+        <button
+          type="button"
+          aria-pressed={flashEnabled}
+          onClick={() => setFlashEnabled((enabled) => !enabled)}
+          disabled={phase === "shooting" || phase === "leaving"}
+          className={`font-hand absolute right-5 bottom-5 rounded-full border px-3 py-1.5 text-sm transition sm:right-7 sm:bottom-7 disabled:cursor-not-allowed disabled:opacity-40 ${
+            flashEnabled
+              ? "border-ink bg-ink text-paper"
+              : "border-ink/25 bg-white/45 text-ink hover:border-ink/50"
+          }`}
+        >
+          flash {flashEnabled ? "on ✦" : "off"}
+        </button>
       </div>
 
       {flash && flashEnabled ? (

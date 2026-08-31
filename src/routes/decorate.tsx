@@ -10,7 +10,13 @@ export const Route = createFileRoute("/decorate")({
 type FormatId = "portrait" | "story";
 type BackdropId =
   "satin" | "bluePaper" | "pinkPaper" | "dots" | "stripes" | "corduroy" | "denim" | "photobooth";
-type EffectId = "original" | "dreamy" | "vintageColor" | "coolMono";
+type EffectId =
+  | "original"
+  | "dreamy"
+  | "vintageColor"
+  | "coolMono"
+  | "warmFlash"
+  | "noirPunch";
 type LayoutId = "strip" | "prints";
 type DecorationId = "none" | "referenceStars" | "bedazzle" | "lace";
 type EditableFinishId = "referenceStars" | "bedazzle";
@@ -124,6 +130,32 @@ const EFFECTS: Array<{ id: EffectId; label: string }> = [
   { id: "dreamy", label: "Dreamy Color" },
   { id: "vintageColor", label: "Vintage Flash" },
 ];
+
+const COLOR_TREATMENTS = {
+  warmFlash: {
+    filter: "brightness(1.04) contrast(1.13) saturate(1.23) sepia(.14)",
+    top: "rgba(255, 188, 138, .28)",
+    bottom: "rgba(117, 48, 39, .12)",
+    alpha: 0.72,
+    blend: "soft-light",
+  },
+  noirPunch: {
+    filter: "brightness(.98) contrast(1.48) saturate(0) sepia(.05)",
+    top: "rgba(255, 255, 255, .10)",
+    bottom: "rgba(20, 20, 28, .16)",
+    alpha: 0.58,
+    blend: "soft-light",
+  },
+} as const;
+
+type ColorTreatmentId = keyof typeof COLOR_TREATMENTS;
+
+const EFFECT_TREATMENTS: Partial<Record<EffectId, ColorTreatmentId>> = {
+  dreamy: "warmFlash",
+  warmFlash: "warmFlash",
+  coolMono: "noirPunch",
+  noirPunch: "noirPunch",
+};
 
 const ALTERNATE_EFFECTS: Array<Exclude<EffectId, "original">> = [
   "dreamy",
@@ -347,8 +379,20 @@ function drawImageWithEffect(
   effect: EffectId,
 ) {
   ctx.save();
-  if (effect === "dreamy") ctx.filter = "brightness(1.015) contrast(1.05) saturate(1.03)";
+  const treatmentId = EFFECT_TREATMENTS[effect];
+  const treatment = treatmentId ? COLOR_TREATMENTS[treatmentId] : null;
+  if (treatment) ctx.filter = treatment.filter;
   ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+  if (treatment) {
+    ctx.filter = "none";
+    ctx.globalAlpha = treatment.alpha;
+    ctx.globalCompositeOperation = treatment.blend;
+    const wash = ctx.createLinearGradient(dx, dy, dx, dy + dh);
+    wash.addColorStop(0, treatment.top);
+    wash.addColorStop(1, treatment.bottom);
+    ctx.fillStyle = wash;
+    ctx.fillRect(dx, dy, dw, dh);
+  }
   ctx.restore();
 }
 
