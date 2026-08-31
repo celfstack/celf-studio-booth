@@ -22,6 +22,9 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type Phase = "entering" | "ready" | "shooting" | "leaving";
 
+type TorchCapabilities = MediaTrackCapabilities & { torch?: boolean };
+type TorchConstraint = MediaTrackConstraintSet & { torch?: boolean };
+
 function Booth() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -32,6 +35,7 @@ function Booth() {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [count, setCount] = useState<number | null>(null);
   const [flash, setFlash] = useState(false);
+  const [flashEnabled, setFlashEnabled] = useState(false);
   const [thumbs, setThumbs] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -92,6 +96,21 @@ function Booth() {
     }
   }, []);
 
+  const setHardwareTorch = useCallback(async (enabled: boolean) => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track || typeof track.getCapabilities !== "function") return;
+    const capabilities = track.getCapabilities() as TorchCapabilities;
+    if (!capabilities.torch) return;
+    try {
+      await track.applyConstraints({
+        advanced: [{ torch: enabled } as TorchConstraint],
+      });
+    } catch {
+      // Front cameras and desktop webcams usually do not expose a torch.
+      // The full-screen flash remains available on every device.
+    }
+  }, []);
+
   const startSequence = useCallback(async () => {
     if (phase !== "ready") return;
     setPhase("shooting");
@@ -102,10 +121,18 @@ function Booth() {
         await sleep(reduced ? 400 : 750);
       }
       setCount(null);
-      setFlash(true);
+      if (flashEnabled) {
+        setFlash(true);
+        await setHardwareTorch(true);
+        // Let the bright screen illuminate the subject before sampling video.
+        await sleep(reduced ? 45 : 110);
+      }
       const bmp = await capture();
       await sleep(170);
-      setFlash(false);
+      if (flashEnabled) {
+        setFlash(false);
+        await setHardwareTorch(false);
+      }
       if (bmp) {
         shotsRef.current.push(bmp);
         setThumbs((prev) => [...prev, makeThumbnail(bmp)]);
@@ -124,7 +151,7 @@ function Booth() {
     streamRef.current = null;
     await sleep(500);
     void navigate({ to: "/print" });
-  }, [capture, navigate, phase]);
+  }, [capture, flashEnabled, navigate, phase, setHardwareTorch]);
 
   const uploadPhotos = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,17 +202,32 @@ function Booth() {
       {/* booth faceplate */}
       <div className="w-full max-w-lg rounded-[28px] bg-paper p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)] sm:p-7">
         {/* look-here sign */}
-        <div className="mx-auto flex w-fit items-center gap-3 rounded-full border border-ink/20 px-5 py-2">
-          <span className="font-type text-[11px] font-bold tracking-[0.22em] text-ink uppercase">
-            Look here
-          </span>
-          <span
-            aria-hidden="true"
-            className="h-4 w-4 rounded-full bg-ink shadow-[inset_0_2px_3px_rgba(255,255,255,0.35),0_0_0_3px_rgba(42,36,30,0.15)]"
-          />
-          <span className="font-type text-[11px] font-bold tracking-[0.22em] text-ink uppercase">
-            Smile
-          </span>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex w-fit items-center gap-2.5 rounded-full border border-ink/20 px-4 py-2">
+            <span className="font-type text-[10px] font-bold tracking-[0.18em] text-ink uppercase">
+              Look here
+            </span>
+            <span
+              aria-hidden="true"
+              className="h-4 w-4 rounded-full bg-ink shadow-[inset_0_2px_3px_rgba(255,255,255,0.35),0_0_0_3px_rgba(42,36,30,0.15)]"
+            />
+            <span className="font-type text-[10px] font-bold tracking-[0.18em] text-ink uppercase">
+              Smile
+            </span>
+          </div>
+          <button
+            type="button"
+            aria-pressed={flashEnabled}
+            onClick={() => setFlashEnabled((enabled) => !enabled)}
+            disabled={phase === "shooting" || phase === "leaving"}
+            className={`font-hand shrink-0 rounded-full border px-3 py-1.5 text-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${
+              flashEnabled
+                ? "border-ink bg-ink text-paper"
+                : "border-ink/25 bg-white/45 text-ink hover:border-ink/50"
+            }`}
+          >
+            flash {flashEnabled ? "on ✦" : "off"}
+          </button>
         </div>
 
         {/* the square + curtain */}
@@ -204,9 +246,6 @@ function Booth() {
             >
               {count}
             </span>
-          ) : null}
-          {flash ? (
-            <span aria-hidden="true" className="absolute inset-0 bg-white/95" />
           ) : null}
           {cameraError ? (
             <span className="absolute inset-0 flex items-center justify-center bg-ink/90 px-6 text-center text-sm text-paper">
@@ -288,6 +327,13 @@ function Booth() {
           </button>
         </div>
       </div>
+
+      {flash && flashEnabled ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-[100] bg-white"
+        />
+      ) : null}
 
       <div className="mt-4 flex w-full max-w-lg items-center justify-between gap-6 px-1">
         <Link
