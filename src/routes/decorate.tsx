@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { saveImageBlob } from "../lib/download";
 import { reframeStrip, renderStrip, type BorderStyle, type PrintLook } from "../lib/strip/render";
 import { getSessionPhotos, getSessionStrip, setSessionStrip } from "../lib/strip/session";
 
@@ -10,13 +11,7 @@ export const Route = createFileRoute("/decorate")({
 type FormatId = "portrait" | "story";
 type BackdropId =
   "satin" | "bluePaper" | "pinkPaper" | "dots" | "stripes" | "corduroy" | "denim" | "photobooth";
-type EffectId =
-  | "original"
-  | "dreamy"
-  | "vintageColor"
-  | "coolMono"
-  | "warmFlash"
-  | "noirPunch";
+type EffectId = "original" | "dreamy" | "vintageColor" | "coolMono" | "warmFlash" | "noirPunch";
 type LayoutId = "strip" | "prints";
 type DecorationId = "none" | "referenceStars" | "bedazzle" | "lace";
 type EditableFinishId = "referenceStars" | "bedazzle";
@@ -758,6 +753,9 @@ function Decorate() {
   const [backdropsReady, setBackdropsReady] = useState(false);
   const [decorationsReady, setDecorationsReady] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [manualSaveUrl, setManualSaveUrl] = useState<string | null>(null);
+  const [downloadRecoveryUrl, setDownloadRecoveryUrl] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const format = FORMATS.find((item) => item.id === formatId)!;
   const ready = stripReady && backdropsReady && decorationsReady;
   const interactionRef = useRef<CanvasInteraction | null>(null);
@@ -808,6 +806,14 @@ function Decorate() {
       if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
     },
     [],
+  );
+
+  useEffect(
+    () => () => {
+      if (manualSaveUrl) URL.revokeObjectURL(manualSaveUrl);
+      if (downloadRecoveryUrl) URL.revokeObjectURL(downloadRecoveryUrl);
+    },
+    [downloadRecoveryUrl, manualSaveUrl],
   );
 
   const undo = useCallback(() => {
@@ -1379,46 +1385,68 @@ function Decorate() {
     const canvas = canvasRef.current;
     if (!canvas || !stripImageRef.current) return;
     setSaving(true);
-    const activeStrip =
-      effect === "original"
-        ? stripImageRef.current
-        : (alternateStripImagesRef.current[effect] ?? stripImageRef.current);
-    drawComposition(
-      canvas,
-      format,
-      backdrop,
-      backdropImagesRef.current[backdrop],
-      layout,
-      effect,
-      border,
-      activeStrip,
-      decorations,
-      decorationImagesRef.current,
-      starImagesRef.current,
-      gemImagesRef.current,
-      loosePrints,
-      starItems,
-      gemItems,
-      null,
-      null,
-      null,
-      false,
-    );
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/png", 1),
-    );
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `celf-studio-decorated-${formatId}.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 15_000);
+    setSaveError(null);
+    try {
+      const activeStrip =
+        effect === "original"
+          ? stripImageRef.current
+          : (alternateStripImagesRef.current[effect] ?? stripImageRef.current);
+      drawComposition(
+        canvas,
+        format,
+        backdrop,
+        backdropImagesRef.current[backdrop],
+        layout,
+        effect,
+        border,
+        activeStrip,
+        decorations,
+        decorationImagesRef.current,
+        starImagesRef.current,
+        gemImagesRef.current,
+        loosePrints,
+        starItems,
+        gemItems,
+        null,
+        null,
+        null,
+        false,
+      );
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png", 1),
+      );
+      if (!blob) throw new Error("Canvas export failed");
+
+      const result = await saveImageBlob(blob, `celf-studio-decorated-${formatId}.png`);
+      if (result.status === "manual") {
+        setDownloadRecoveryUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return null;
+        });
+        setManualSaveUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return result.url;
+        });
+      } else if (result.status === "downloaded") {
+        setDownloadRecoveryUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return result.url;
+        });
+      }
+    } catch {
+      setSaveError("Your browser could not save this image. Please try again.");
+    } finally {
+      setSaving(false);
+      paint();
     }
-    setSaving(false);
-    paint();
+  };
+
+  const closeManualSave = () => {
+    setSaveError(null);
+    setManualSaveUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
   };
 
   return (
@@ -1734,13 +1762,71 @@ function Decorate() {
             disabled={!ready || saving || borderRendering}
             className="w-full rounded-2xl bg-ink px-6 py-3 text-base font-semibold text-paper shadow-[0_12px_30px_-16px_rgba(42,36,30,.7)] transition hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 lg:col-span-2"
           >
-            Save image
+            {saving ? "Saving…" : "Save image"}
           </button>
+          {downloadRecoveryUrl ? (
+            <a
+              href={downloadRecoveryUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-center font-type text-[10px] text-ink-soft underline decoration-ink/25 underline-offset-4 transition-colors hover:text-rust lg:col-span-2"
+            >
+              download not appearing? open image
+            </a>
+          ) : null}
           <p className="font-type text-center text-[10px] uppercase tracking-[.12em] text-ink-soft lg:col-span-2">
             Made privately in your browser
           </p>
         </aside>
       </div>
+
+      {manualSaveUrl || saveError ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Save your decorated photo"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/85 px-4 py-8 backdrop-blur-sm"
+          onClick={closeManualSave}
+        >
+          <div
+            className="flex max-h-full w-full max-w-md flex-col items-center gap-4 rounded-[24px] bg-paper p-5 text-center shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 className="font-hand text-2xl text-ink">save your image</h2>
+            {manualSaveUrl ? (
+              <img
+                src={manualSaveUrl}
+                alt="Your finished Celf Studio composition"
+                className="min-h-0 max-h-[62dvh] w-auto rounded-md object-contain shadow-lg"
+              />
+            ) : null}
+            <p className="text-sm text-ink-soft">
+              {manualSaveUrl
+                ? "Press and hold the image, then choose Save to Photos or Save to Files."
+                : saveError}
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {manualSaveUrl ? (
+                <a
+                  href={manualSaveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper"
+                >
+                  Open full-size image
+                </a>
+              ) : null}
+              <button
+                type="button"
+                onClick={closeManualSave}
+                className="rounded-full border border-ink/20 px-5 py-2.5 font-hand text-sm text-ink"
+              >
+                close
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

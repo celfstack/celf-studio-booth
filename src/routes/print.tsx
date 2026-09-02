@@ -1,9 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import {
-  renderStrip,
-  stripDateLabel,
-} from "../lib/strip/render";
+import { saveImageBlob } from "../lib/download";
+import { renderStrip, stripDateLabel } from "../lib/strip/render";
 import {
   getSessionPhotos,
   getSessionStrip,
@@ -23,15 +21,17 @@ function Print() {
   const [dropped, setDropped] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [manualSaveUrl, setManualSaveUrl] = useState<string | null>(null);
+  const [downloadRecoveryUrl, setDownloadRecoveryUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const existing = getSessionStrip();
     if (existing) {
       setStripUrl(existing.url);
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => setDropped(true)),
-      );
+      requestAnimationFrame(() => requestAnimationFrame(() => setDropped(true)));
       return;
     }
     const photos = getSessionPhotos();
@@ -51,14 +51,10 @@ function Print() {
         }
         setSessionStrip({ url: result.url, blob: result.blob, border: "classic" });
         setStripUrl(result.url);
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => setDropped(true)),
-        );
+        requestAnimationFrame(() => requestAnimationFrame(() => setDropped(true)));
       } catch {
         if (!cancelled) {
-          setRenderError(
-            "The printer jammed. Nothing was lost, take another strip.",
-          );
+          setRenderError("The printer jammed. Nothing was lost, take another strip.");
         }
       }
     })();
@@ -67,15 +63,62 @@ function Print() {
     };
   }, [navigate]);
 
-  const onDownload = useCallback(() => {
+  const onDownload = useCallback(async () => {
     if (!stripUrl) return;
-    const a = document.createElement("a");
-    a.href = stripUrl;
-    a.download = `celf-studio-${stripDateLabel().toLowerCase().replaceAll(" ", "-")}.png`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    setSaving(true);
+    setDownloadError(null);
+    try {
+      const stored = getSessionStrip();
+      let blob = stored?.blob;
+      if (!blob) {
+        const response = await fetch(stripUrl);
+        blob = await response.blob();
+      }
+      if (!blob) throw new Error("Photo strip is unavailable");
+      const filename = `celf-studio-${stripDateLabel().toLowerCase().replaceAll(" ", "-")}.png`;
+      const result = await saveImageBlob(blob, filename);
+      if (result.status === "manual") {
+        setDownloadRecoveryUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return null;
+        });
+        setManualSaveUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return result.url;
+        });
+        setViewerOpen(true);
+      } else if (result.status === "downloaded") {
+        setDownloadRecoveryUrl((current) => {
+          if (current) URL.revokeObjectURL(current);
+          return result.url;
+        });
+      }
+    } catch {
+      setDownloadError(
+        "Your browser could not save the image. Open the strip and press and hold it instead.",
+      );
+      setViewerOpen(true);
+    } finally {
+      setSaving(false);
+    }
   }, [stripUrl]);
+
+  const closeViewer = useCallback(() => {
+    setViewerOpen(false);
+    setDownloadError(null);
+    setManualSaveUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (manualSaveUrl) URL.revokeObjectURL(manualSaveUrl);
+      if (downloadRecoveryUrl) URL.revokeObjectURL(downloadRecoveryUrl);
+    },
+    [downloadRecoveryUrl, manualSaveUrl],
+  );
 
   const onTakeAnother = useCallback(() => {
     resetSession();
@@ -138,9 +181,7 @@ function Print() {
         </p>
       ) : null}
       {stripUrl ? (
-        <p className="font-hand mt-3 text-lg text-ink-soft">
-          click the strip to see it up close
-        </p>
+        <p className="font-hand mt-3 text-lg text-ink-soft">click the strip to see it up close</p>
       ) : null}
 
       {/* actions */}
@@ -156,11 +197,11 @@ function Print() {
           </button>
           <button
             type="button"
-            onClick={onDownload}
-            disabled={!stripUrl}
+            onClick={() => void onDownload()}
+            disabled={!stripUrl || saving}
             className="min-w-36 rounded-full bg-ink px-7 py-3 text-base font-semibold text-paper transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-10px_rgba(42,36,30,0.7)] active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Download
+            {saving ? "Saving…" : "Download"}
           </button>
         </div>
         <button
@@ -170,6 +211,16 @@ function Print() {
         >
           retake
         </button>
+        {downloadRecoveryUrl ? (
+          <a
+            href={downloadRecoveryUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="font-type text-[10px] text-ink-soft underline decoration-ink/25 underline-offset-4 transition-colors hover:text-rust"
+          >
+            download not appearing? open image
+          </a>
+        ) : null}
       </div>
 
       {/* full-size viewer */}
@@ -179,14 +230,19 @@ function Print() {
           aria-modal="true"
           aria-label="Your photo strip, full size"
           className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-ink/85 px-4 py-8 backdrop-blur-sm"
-          onClick={() => setViewerOpen(false)}
+          onClick={closeViewer}
         >
           <img
-            src={stripUrl}
+            src={manualSaveUrl ?? stripUrl}
             alt="Photo strip of four contrasty sepia frames with a celfstudio footer"
             className="max-h-[76dvh] w-auto rounded-[4px] shadow-[0_40px_90px_-20px_rgba(0,0,0,0.9)]"
             onClick={(e) => e.stopPropagation()}
           />
+          {manualSaveUrl || downloadError ? (
+            <p className="max-w-sm text-center text-sm text-paper">
+              Press and hold the image, then choose Save to Photos or Save to Files.
+            </p>
+          ) : null}
           <div
             className="flex flex-col items-center justify-center gap-3"
             onClick={(e) => e.stopPropagation()}
@@ -201,16 +257,29 @@ function Print() {
               </button>
               <button
                 type="button"
-                onClick={onDownload}
+                onClick={() => void onDownload()}
+                disabled={saving}
                 className="rounded-full bg-paper px-7 py-3 text-base font-semibold text-ink transition-transform duration-150 hover:scale-[1.03] active:scale-[0.97]"
               >
-                Download
+                {saving ? "Saving…" : "Download"}
               </button>
             </div>
             <div className="flex items-center gap-4 font-type text-[11px] text-paper/70">
-              <button type="button" onClick={onTakeAnother} className="underline underline-offset-4 transition-colors hover:text-paper">retake</button>
+              <button
+                type="button"
+                onClick={onTakeAnother}
+                className="underline underline-offset-4 transition-colors hover:text-paper"
+              >
+                retake
+              </button>
               <span aria-hidden="true">·</span>
-              <button type="button" onClick={() => setViewerOpen(false)} className="underline underline-offset-4 transition-colors hover:text-paper">close</button>
+              <button
+                type="button"
+                onClick={closeViewer}
+                className="underline underline-offset-4 transition-colors hover:text-paper"
+              >
+                close
+              </button>
             </div>
           </div>
         </div>
