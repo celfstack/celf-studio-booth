@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import type { ReactElement, ReactNode } from 'react'
-import { useRender } from '@base-ui/react/use-render'
-import IconCheckOutlined from '@material-symbols/svg-400/outlined/check.svg?react'
-import { Icon } from '@higgsfield/quanta/icon'
-import { Typography } from '@higgsfield/quanta/typography'
-import { cn } from '@/lib/utils'
+import type { ReactElement, ReactNode } from "react";
+import { useRender } from "@base-ui/react/use-render";
+import IconCheckOutlined from "@material-symbols/svg-400/outlined/check.svg?react";
+import { Icon } from "@higgsfield/quanta/icon";
+import { Typography } from "@higgsfield/quanta/typography";
+import { cn } from "@/lib/utils";
 
 /**
  * StepRail — a horizontal numbered step indicator for short in-app wizards
@@ -32,32 +32,32 @@ import { cn } from '@/lib/utils'
 
 export interface StepRailStep {
   /** Stable id used for selection + React keys. */
-  id: string
+  id: string;
   /** Label shown beside the number badge. */
-  label: ReactNode
+  label: ReactNode;
 }
 
 export interface StepRailProps {
   /** Ordered steps, left → right. */
-  steps: StepRailStep[]
+  steps: StepRailStep[];
   /** The active step id. */
-  current: string
+  current: string;
   /**
    * Ids the user may jump to (already unlocked). When set, only these steps are
    * clickable; the rest render as passive markers. Omit to make every step
    * clickable.
    */
-  reachable?: string[]
+  reachable?: string[];
   /** Fired when a reachable step is clicked. */
-  onStepChange?: (id: string) => void
+  onStepChange?: (id: string) => void;
   /** Swap the host element (defaults to a `<nav>`). */
-  render?: ReactElement
-  className?: string
+  render?: ReactElement;
+  className?: string;
 }
 
 interface StepBadgeProps {
-  index: number
-  state: 'complete' | 'current' | 'upcoming'
+  index: number;
+  state: "complete" | "current" | "upcoming";
 }
 
 /** The numbered circle — brand check (complete), brand number (current), muted (upcoming). */
@@ -65,17 +65,15 @@ function StepBadge({ index, state }: StepBadgeProps) {
   return (
     <span
       className={cn(
-        'flex size-7 shrink-0 items-center justify-center rounded-q-full text-q-body-sm-semi-bold transition-colors',
-        state === 'upcoming'
-          ? 'bg-q-transparent-light-10 text-q-text-secondary'
-          : 'bg-q-brand-primary text-q-text-inverse',
+        "flex size-7 shrink-0 items-center justify-center rounded-q-full text-q-body-sm-semi-bold transition-colors",
+        state === "upcoming"
+          ? "bg-q-transparent-light-10 text-q-text-secondary"
+          : "bg-q-brand-primary text-q-text-inverse",
       )}
     >
-      {state === 'complete'
-        ? <Icon as={IconCheckOutlined} size="sm" />
-        : index + 1}
+      {state === "complete" ? <Icon as={IconCheckOutlined} size="sm" /> : index + 1}
     </span>
-  )
+  );
 }
 
 export function StepRail({
@@ -86,63 +84,58 @@ export function StepRail({
   render,
   className,
 }: StepRailProps) {
-  const currentIndex = steps.findIndex(step => step.id === current)
+  const currentIndex = steps.findIndex((step) => step.id === current);
 
   const content = steps.map((step, index) => {
-    const state = index < currentIndex
-      ? 'complete'
-      : index === currentIndex
-        ? 'current'
-        : 'upcoming'
-    const canClick = onStepChange != null && (reachable == null || reachable.includes(step.id))
+    const state =
+      index < currentIndex ? "complete" : index === currentIndex ? "current" : "upcoming";
+    const canClick = onStepChange != null && (reachable == null || reachable.includes(step.id));
 
     return (
       <div key={step.id} className="flex min-w-0 items-center gap-3">
-        {index > 0
-          ? (
-              <span
-                aria-hidden
-                className={cn(
-                  'h-px w-6 shrink-0 transition-colors sm:w-12',
-                  index <= currentIndex ? 'bg-q-brand-primary' : 'bg-q-border-subtle',
-                )}
-              />
-            )
-          : null}
+        {index > 0 ? (
+          <span
+            aria-hidden
+            className={cn(
+              "h-px w-6 shrink-0 transition-colors sm:w-12",
+              index <= currentIndex ? "bg-q-brand-primary" : "bg-q-border-subtle",
+            )}
+          />
+        ) : null}
         <button
           type="button"
           disabled={!canClick}
-          aria-current={state === 'current' ? 'step' : undefined}
+          aria-current={state === "current" ? "step" : undefined}
           onClick={canClick ? () => onStepChange?.(step.id) : undefined}
           className={cn(
-            'flex items-center gap-2 rounded-q-full px-1 py-0.5 transition-opacity',
+            "flex items-center gap-2 rounded-q-full px-1 py-0.5 transition-opacity",
             canClick
-              ? 'cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-q-border-focus'
-              : 'cursor-default',
-            state === 'upcoming' && 'opacity-70',
+              ? "cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-q-border-focus"
+              : "cursor-default",
+            state === "upcoming" && "opacity-70",
           )}
         >
           <StepBadge index={index} state={state} />
           <Typography
             as="span"
             variant="body-sm-semi-bold"
-            color={state === 'upcoming' ? 'secondary' : 'primary'}
+            color={state === "upcoming" ? "secondary" : "primary"}
             className="hidden truncate sm:inline"
           >
             {step.label}
           </Typography>
         </button>
       </div>
-    )
-  })
+    );
+  });
 
   return useRender({
     render,
-    defaultTagName: 'nav',
+    defaultTagName: "nav",
     props: {
-      'aria-label': 'Progress',
-      'className': cn('flex items-center justify-center', className),
-      'children': content,
+      "aria-label": "Progress",
+      className: cn("flex items-center justify-center", className),
+      children: content,
     },
-  })
+  });
 }

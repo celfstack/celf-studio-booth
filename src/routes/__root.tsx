@@ -8,6 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Analytics } from "@vercel/analytics/react";
 
 import appCss from "../styles.css?url";
 import { reportHiggsfieldError } from "../lib/higgsfield-error-reporting";
@@ -120,9 +121,7 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <p className="font-type text-sm tracking-widest text-ink-soft">404</p>
         <h1 className="font-display mt-2 text-3xl text-ink">Page not found</h1>
-        <p className="mt-3 text-base text-ink-soft">
-          This page does not exist or has been moved.
-        </p>
+        <p className="mt-3 text-base text-ink-soft">This page does not exist or has been moved.</p>
         <Link
           to="/"
           className="mt-6 inline-block rounded-full border border-ink/30 px-5 py-2 text-sm font-medium text-ink transition hover:bg-ink hover:text-paper active:scale-[0.98]"
@@ -188,6 +187,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body className="bg-paper text-ink">
         {children}
         <Scripts />
+        <Analytics />
       </body>
     </html>
   );

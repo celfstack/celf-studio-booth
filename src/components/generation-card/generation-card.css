@@ -80,8 +80,13 @@
 }
 
 @keyframes q-generation-pulse {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 0.95; }
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.95;
+  }
 }
 
 /* The "Generating" pill — glass overlay chip pinned top-left (Figma 21759:51482). */

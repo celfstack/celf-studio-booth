@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import type { ComponentProps, ReactElement, ReactNode, Ref } from 'react'
-import { useRender } from '@base-ui/react/use-render'
-import { Loader } from '@higgsfield/quanta/loader'
-import { Media } from '@higgsfield/quanta/media'
-import { Typography } from '@higgsfield/quanta/typography'
-import { cn as cx } from '@/lib/utils'
+import type { ComponentProps, ReactElement, ReactNode, Ref } from "react";
+import { useRender } from "@base-ui/react/use-render";
+import { Loader } from "@higgsfield/quanta/loader";
+import { Media } from "@higgsfield/quanta/media";
+import { Typography } from "@higgsfield/quanta/typography";
+import { cn as cx } from "@/lib/utils";
 
 /**
  * GenerationCard — a single generation result tile for feed / history grids
@@ -29,29 +29,29 @@ import { cn as cx } from '@/lib/utils'
  * `render` (Base UI `useRender`) for clickable tiles.
  */
 
-export type GenerationCardState = 'ready' | 'generating'
+export type GenerationCardState = "ready" | "generating";
 
-export type GenerationCardProps = Omit<ComponentProps<'div'>, 'title'> & {
+export type GenerationCardProps = Omit<ComponentProps<"div">, "title"> & {
   /** Lifecycle state — `ready` shows the asset, `generating` the pulsing placeholder. */
-  state?: GenerationCardState
+  state?: GenerationCardState;
   /** Image source for the default `Media.Image` (ready state). Ignored when `media` is set. */
-  src?: string
+  src?: string;
   /** Alt text for the default image. */
-  alt?: string
+  alt?: string;
   /** Aspect ratio, forwarded to `Media` (default `video`). */
-  ratio?: ComponentProps<typeof Media>['ratio']
+  ratio?: ComponentProps<typeof Media>["ratio"];
   /** Custom media node (a `Media.Video`, a fallback…) instead of the default image. */
-  media?: ReactNode
+  media?: ReactNode;
   /** Optional bottom title, over the media scrim. Ready state only. */
-  title?: ReactNode
+  title?: ReactNode;
   /** Status pill label shown while generating. Default `Generating`. */
-  generatingLabel?: ReactNode
+  generatingLabel?: ReactNode;
   /** Extra overlay content composed inside the frame. */
-  children?: ReactNode
+  children?: ReactNode;
   /** Swap the host element — `<button>`/`<a>`/`<Link>` for clickable tiles. */
-  render?: ReactElement
-  ref?: Ref<Element>
-}
+  render?: ReactElement;
+  ref?: Ref<Element>;
+};
 
 /** The pulsing top glow + "Generating" status pill (Cinema-Studio-V4 20037:25838). */
 function GeneratingOverlay({ label }: { label: ReactNode }) {
@@ -64,31 +64,31 @@ function GeneratingOverlay({ label }: { label: ReactNode }) {
           variant="circle"
           size="xs"
           color="brand"
-          aria-label={typeof label === 'string' ? label : 'Generating'}
+          aria-label={typeof label === "string" ? label : "Generating"}
         />
         <Typography as="span" variant="body-sm-medium" color="brand" aria-hidden="true">
           {label}
         </Typography>
       </span>
     </span>
-  )
+  );
 }
 
 function GenerationCard({
-  state = 'ready',
+  state = "ready",
   src,
-  alt = '',
-  ratio = 'video',
+  alt = "",
+  ratio = "video",
   media,
   title,
-  generatingLabel = 'Generating',
+  generatingLabel = "Generating",
   className,
   children,
   render,
   ref,
   ...props
 }: GenerationCardProps) {
-  const generating = state === 'generating'
+  const generating = state === "generating";
 
   const content = (
     <>
@@ -97,36 +97,34 @@ function GenerationCard({
           ? (media ?? <Media.Fallback className="q-generation-card-canvas" />)
           : (media ?? (src != null ? <Media.Image src={src} alt={alt} /> : <Media.Fallback />))}
       </Media>
-      {!generating && title != null
-        ? (
-            <Media.Overlay placement="bottom" className="q-generation-card-caption">
-              <Typography
-                as="span"
-                variant="body-sm-semi-bold"
-                color="primary"
-                className="q-generation-card-title"
-              >
-                {title}
-              </Typography>
-            </Media.Overlay>
-          )
-        : null}
+      {!generating && title != null ? (
+        <Media.Overlay placement="bottom" className="q-generation-card-caption">
+          <Typography
+            as="span"
+            variant="body-sm-semi-bold"
+            color="primary"
+            className="q-generation-card-title"
+          >
+            {title}
+          </Typography>
+        </Media.Overlay>
+      ) : null}
       {generating ? <GeneratingOverlay label={generatingLabel} /> : null}
       {children}
     </>
-  )
+  );
 
   return useRender({
     render,
-    defaultTagName: 'div',
+    defaultTagName: "div",
     ref: ref as Ref<Element> | undefined,
     props: {
-      className: cx('q-generation-card', className),
-      'data-state': state,
+      className: cx("q-generation-card", className),
+      "data-state": state,
       children: content,
       ...props,
     },
-  })
+  });
 }
 
-export { GenerationCard }
+export { GenerationCard };

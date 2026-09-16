@@ -1,10 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  decodePhoto,
-  isSupportedPhotoFile,
-  makeThumbnail,
-} from "../lib/strip/render";
+import { decodePhoto, isSupportedPhotoFile, makeThumbnail } from "../lib/strip/render";
 import { setSessionPhotos } from "../lib/strip/session";
 
 export const Route = createFileRoute("/booth")({
@@ -13,8 +9,7 @@ export const Route = createFileRoute("/booth")({
 
 function prefersReducedMotion(): boolean {
   return (
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
 }
 
@@ -137,9 +132,7 @@ function Booth() {
         shotsRef.current.push(bmp);
         setThumbs((prev) => [...prev, makeThumbnail(bmp)]);
       } else {
-        setCameraError(
-          "The camera feed dropped mid-shoot. Step back in and try again.",
-        );
+        setCameraError("The camera feed dropped mid-shoot. Step back in and try again.");
         setPhase("ready");
         return;
       }
@@ -188,9 +181,7 @@ function Booth() {
         decoded.forEach((photo) => {
           if (photo instanceof ImageBitmap) photo.close();
         });
-        setUploadError(
-          "One of those photos could not be opened. Try another set.",
-        );
+        setUploadError("One of those photos could not be opened. Try another set.");
         setUploading(false);
       }
     },
@@ -307,9 +298,7 @@ function Booth() {
               />
             </svg>
             <span className="font-hand text-2xl text-ink">
-              {phase === "shooting" || phase === "leaving"
-                ? "here we go"
-                : "press to start"}
+              {phase === "shooting" || phase === "leaving" ? "here we go" : "press to start"}
             </span>
           </button>
         </div>
@@ -330,10 +319,7 @@ function Booth() {
       </div>
 
       {flash && flashEnabled ? (
-        <span
-          aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-[100] bg-white"
-        />
+        <span aria-hidden="true" className="pointer-events-none fixed inset-0 z-[100] bg-white" />
       ) : null}
 
       <div className="mt-4 flex w-full max-w-lg items-center justify-between gap-6 px-1">

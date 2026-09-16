@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import type { ComponentPropsWithRef, ReactNode } from 'react'
-import { cn } from '@/lib/utils'
+import type { ComponentPropsWithRef, ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 /**
  * RailFooter — the pinned Generate CTA footer for a creation rail / input panel
@@ -27,9 +27,9 @@ import { cn } from '@/lib/utils'
  *     </RailFooter>
  *   </aside>
  */
-export interface RailFooterProps extends ComponentPropsWithRef<'div'> {
+export interface RailFooterProps extends ComponentPropsWithRef<"div"> {
   /** The Generate CTA (a Quanta `marketingPrimary` Button, full-width). */
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function RailFooter({ children, className, ...props }: RailFooterProps) {
@@ -39,12 +39,12 @@ export function RailFooter({ children, className, ...props }: RailFooterProps) {
         // Pinned to the bottom of the scrolling rail; `mt-auto` drops it to the
         // bottom when content is short. The gradient scrim (rail surface →
         // transparent) fades the scrolling fields under the CTA.
-        'sticky bottom-0 z-10 mt-auto flex flex-col bg-gradient-to-t from-q-background-secondary from-70% to-transparent pt-8 pb-2',
+        "sticky bottom-0 z-10 mt-auto flex flex-col bg-gradient-to-t from-q-background-secondary from-70% to-transparent pt-8 pb-2",
         className,
       )}
       {...props}
     >
       {children}
     </div>
-  )
+  );
 }

@@ -6,18 +6,90 @@ export const Route = createFileRoute("/")({
 });
 
 const HOME_STARS = [
-  { src: "/assets/decorations/stars/silver-glitter.png", left: "31%", top: "25%", width: "5.2%", delay: "2.5s" },
-  { src: "/assets/decorations/stars/chrome-puff.png", left: "66%", top: "28%", width: "6.2%", delay: "2.58s" },
-  { src: "/assets/decorations/stars/silver-sketch.png", left: "24%", top: "39%", width: "5.5%", delay: "2.66s" },
-  { src: "/assets/decorations/stars/silver-faceted.png", left: "70%", top: "43%", width: "5.1%", delay: "2.74s" },
-  { src: "/assets/decorations/stars/white-paper.png", left: "33%", top: "51%", width: "4.2%", delay: "2.82s" },
-  { src: "/assets/decorations/stars/chrome-sparkle.png", left: "67%", top: "57%", width: "5.8%", delay: "2.9s" },
-  { src: "/assets/decorations/stars/silver-glitter.png", left: "26%", top: "65%", width: "4.7%", delay: "2.98s" },
-  { src: "/assets/decorations/stars/chrome-puff.png", left: "71%", top: "70%", width: "5.2%", delay: "3.06s" },
-  { src: "/assets/decorations/stars/silver-faceted.png", left: "35%", top: "77%", width: "4.8%", delay: "3.14s" },
-  { src: "/assets/decorations/stars/silver-sketch.png", left: "63%", top: "81%", width: "5%", delay: "3.22s" },
-  { src: "/assets/decorations/stars/chrome-sparkle.png", left: "38%", top: "35%", width: "3.6%", delay: "3.3s" },
-  { src: "/assets/decorations/stars/white-paper.png", left: "61%", top: "67%", width: "3.8%", delay: "3.38s" },
+  {
+    src: "/assets/decorations/stars/silver-glitter.png",
+    left: "31%",
+    top: "25%",
+    width: "5.2%",
+    delay: "2.5s",
+  },
+  {
+    src: "/assets/decorations/stars/chrome-puff.png",
+    left: "66%",
+    top: "28%",
+    width: "6.2%",
+    delay: "2.58s",
+  },
+  {
+    src: "/assets/decorations/stars/silver-sketch.png",
+    left: "24%",
+    top: "39%",
+    width: "5.5%",
+    delay: "2.66s",
+  },
+  {
+    src: "/assets/decorations/stars/silver-faceted.png",
+    left: "70%",
+    top: "43%",
+    width: "5.1%",
+    delay: "2.74s",
+  },
+  {
+    src: "/assets/decorations/stars/white-paper.png",
+    left: "33%",
+    top: "51%",
+    width: "4.2%",
+    delay: "2.82s",
+  },
+  {
+    src: "/assets/decorations/stars/chrome-sparkle.png",
+    left: "67%",
+    top: "57%",
+    width: "5.8%",
+    delay: "2.9s",
+  },
+  {
+    src: "/assets/decorations/stars/silver-glitter.png",
+    left: "26%",
+    top: "65%",
+    width: "4.7%",
+    delay: "2.98s",
+  },
+  {
+    src: "/assets/decorations/stars/chrome-puff.png",
+    left: "71%",
+    top: "70%",
+    width: "5.2%",
+    delay: "3.06s",
+  },
+  {
+    src: "/assets/decorations/stars/silver-faceted.png",
+    left: "35%",
+    top: "77%",
+    width: "4.8%",
+    delay: "3.14s",
+  },
+  {
+    src: "/assets/decorations/stars/silver-sketch.png",
+    left: "63%",
+    top: "81%",
+    width: "5%",
+    delay: "3.22s",
+  },
+  {
+    src: "/assets/decorations/stars/chrome-sparkle.png",
+    left: "38%",
+    top: "35%",
+    width: "3.6%",
+    delay: "3.3s",
+  },
+  {
+    src: "/assets/decorations/stars/white-paper.png",
+    left: "61%",
+    top: "67%",
+    width: "3.8%",
+    delay: "3.38s",
+  },
 ] as const;
 
 function Home() {
@@ -30,15 +102,39 @@ function Home() {
 
   return (
     <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-6 text-ink sm:py-8">
-      <span aria-hidden="true" className="absolute -left-2 top-[11%] font-hand text-4xl text-ink/20">✦</span>
-      <span aria-hidden="true" className="absolute left-[57%] top-7 font-hand text-3xl text-ink/20 sm:top-12">✦</span>
-      <span aria-hidden="true" className="absolute right-8 top-[19%] font-hand text-4xl text-ink/20 sm:right-16">✦</span>
-      <span aria-hidden="true" className="absolute -right-2 bottom-[9%] font-hand text-3xl text-ink/20">✦</span>
+      <span
+        aria-hidden="true"
+        className="absolute -left-2 top-[11%] font-hand text-4xl text-ink/20"
+      >
+        ✦
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute left-[57%] top-7 font-hand text-3xl text-ink/20 sm:top-12"
+      >
+        ✦
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute right-8 top-[19%] font-hand text-4xl text-ink/20 sm:right-16"
+      >
+        ✦
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute -right-2 bottom-[9%] font-hand text-3xl text-ink/20"
+      >
+        ✦
+      </span>
 
       <div className="flex w-full flex-col items-center">
         <header className="text-center">
-          <h1 className="font-hand text-5xl leading-none tracking-[-.055em] sm:text-6xl">celf studio</h1>
-          <p className="font-hand mt-3 text-lg text-ink-soft sm:text-xl">a little photo booth, just for you</p>
+          <h1 className="font-hand text-5xl leading-none tracking-[-.055em] sm:text-6xl">
+            celf studio
+          </h1>
+          <p className="font-hand mt-3 text-lg text-ink-soft sm:text-xl">
+            a little photo booth, just for you
+          </p>
         </header>
 
         <button
@@ -78,7 +174,12 @@ function Home() {
                   src={star.src}
                   alt=""
                   className="home-print-star"
-                  style={{ left: star.left, top: star.top, width: star.width, animationDelay: star.delay }}
+                  style={{
+                    left: star.left,
+                    top: star.top,
+                    width: star.width,
+                    animationDelay: star.delay,
+                  }}
                 />
               ))}
             </span>

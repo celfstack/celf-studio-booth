@@ -1,14 +1,14 @@
-import { useMemo } from 'react'
-import { Loader } from '@higgsfield/quanta/loader'
-import { Typography } from '@higgsfield/quanta/typography'
-import { GalleryTile } from './gallery-tile.tsx'
-import { DensityControl } from './density-control.tsx'
-import { useJustifiedGallery } from './use-justified-gallery.ts'
-import { useReducedMotion } from './use-reduced-motion.ts'
-import { makeInitialItems } from './demo-data.ts'
-import type { LoadTier } from './types.ts'
-import type { GalleryItem } from './types.ts'
-import './gallery.css'
+import { useMemo } from "react";
+import { Loader } from "@higgsfield/quanta/loader";
+import { Typography } from "@higgsfield/quanta/typography";
+import { GalleryTile } from "./gallery-tile.tsx";
+import { DensityControl } from "./density-control.tsx";
+import { useJustifiedGallery } from "./use-justified-gallery.ts";
+import { useReducedMotion } from "./use-reduced-motion.ts";
+import { makeInitialItems } from "./demo-data.ts";
+import type { LoadTier } from "./types.ts";
+import type { GalleryItem } from "./types.ts";
+import "./gallery.css";
 
 /**
  * JustifiedGallery — the virtualized, Flickr-style justified-masonry feed that
@@ -25,14 +25,14 @@ import './gallery.css'
 
 export interface JustifiedGalleryProps {
   /** The dataset. Defaults to the seeded demo history (with a generating tile). */
-  items?: GalleryItem[]
+  items?: GalleryItem[];
 }
 
-const numberFormat = new Intl.NumberFormat('en-US')
+const numberFormat = new Intl.NumberFormat("en-US");
 
 export function JustifiedGallery({ items }: JustifiedGalleryProps) {
-  const initial = useMemo(() => items ?? makeInitialItems(), [items])
-  const reducedMotion = useReducedMotion()
+  const initial = useMemo(() => items ?? makeInitialItems(), [items]);
+  const reducedMotion = useReducedMotion();
 
   const {
     viewportRef,
@@ -45,10 +45,10 @@ export function JustifiedGallery({ items }: JustifiedGalleryProps) {
     setDensity,
     itemCount,
     loadingMore,
-  } = useJustifiedGallery(initial)
+  } = useJustifiedGallery(initial);
 
-  const viewTop = scrollTop
-  const viewBottom = scrollTop + viewportHeight
+  const viewTop = scrollTop;
+  const viewBottom = scrollTop + viewportHeight;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -59,7 +59,7 @@ export function JustifiedGallery({ items }: JustifiedGalleryProps) {
           </Typography>
           <Typography as="span" variant="caption-sm-regular" color="tertiary">
             {numberFormat.format(itemCount)}
-            {' items'}
+            {" items"}
           </Typography>
           {loadingMore && (
             <span className="flex items-center gap-1.5 text-q-text-tertiary">
@@ -76,7 +76,7 @@ export function JustifiedGallery({ items }: JustifiedGalleryProps) {
       <div ref={viewportRef} className="qg-viewport relative min-h-0 flex-1 overflow-y-auto">
         <div className="relative w-full" style={{ height: layout.totalHeight }}>
           {visibleRows.map((row) => {
-            if (row.type === 'header') {
+            if (row.type === "header") {
               return (
                 <div
                   key={row.key}
@@ -87,11 +87,11 @@ export function JustifiedGallery({ items }: JustifiedGalleryProps) {
                     {row.label}
                   </Typography>
                 </div>
-              )
+              );
             }
-            const rowVisible = row.y < viewBottom && row.y + row.height > viewTop
-            const tier: LoadTier = rowVisible ? 'full' : 'near'
-            return row.tiles!.map(rect => (
+            const rowVisible = row.y < viewBottom && row.y + row.height > viewTop;
+            const tier: LoadTier = rowVisible ? "full" : "near";
+            return row.tiles!.map((rect) => (
               <GalleryTile
                 key={rect.item.id}
                 item={rect.item}
@@ -101,10 +101,10 @@ export function JustifiedGallery({ items }: JustifiedGalleryProps) {
                 fastScroll={fastScroll}
                 reducedMotion={reducedMotion}
               />
-            ))
+            ));
           })}
         </div>
       </div>
     </div>
-  )
+  );
 }

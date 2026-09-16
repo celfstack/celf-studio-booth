@@ -40,7 +40,12 @@ export function selectGenerationMedia(generation: Generation): GenerationMediaPr
       phase,
       outputType,
       terminal: isTerminalJobStatus(generation.status),
-      reason: phase === "failed" ? "failed" : generation.status === "completed" ? "preview_unavailable" : "pending",
+      reason:
+        phase === "failed"
+          ? "failed"
+          : generation.status === "completed"
+            ? "preview_unavailable"
+            : "pending",
     };
   }
 
@@ -58,8 +63,9 @@ export function selectGenerationMedia(generation: Generation): GenerationMediaPr
   }
 
   if (outputType === "video") {
-    const posterUrl = generation.results.thumbnailUrl
-      ?? (previewUrl && getMediaType(previewUrl) === "image" ? previewUrl : undefined);
+    const posterUrl =
+      generation.results.thumbnailUrl ??
+      (previewUrl && getMediaType(previewUrl) === "image" ? previewUrl : undefined);
     return {
       kind: "video",
       phase,
@@ -89,7 +95,8 @@ export function getGenerationStatusLabel(generation: Generation): string {
 export function getGenerationCreatedLabel(generation: Generation): string | undefined {
   if (generation.createdAt === undefined) return undefined;
 
-  const ms = generation.createdAt > 10_000_000_000 ? generation.createdAt : generation.createdAt * 1000;
+  const ms =
+    generation.createdAt > 10_000_000_000 ? generation.createdAt : generation.createdAt * 1000;
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
@@ -99,5 +106,8 @@ export function getGenerationCreatedLabel(generation: Generation): string | unde
 }
 
 export function getGenerationFailureLabel(generation: Generation): string | undefined {
-  return generation.failReason?.trim() || (getJobPhase(generation) === "failed" ? getGenerationStatusLabel(generation) : undefined);
+  return (
+    generation.failReason?.trim() ||
+    (getJobPhase(generation) === "failed" ? getGenerationStatusLabel(generation) : undefined)
+  );
 }

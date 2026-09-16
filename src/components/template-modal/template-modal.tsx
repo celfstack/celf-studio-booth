@@ -1,9 +1,9 @@
-import type { ReactElement, ReactNode } from 'react'
-import { useState } from 'react'
-import { Media } from '@higgsfield/quanta/media'
-import { Modal } from '@higgsfield/quanta/modal'
-import { Typography } from '@higgsfield/quanta/typography'
-import { cn } from '@/lib/utils'
+import type { ReactElement, ReactNode } from "react";
+import { useState } from "react";
+import { Media } from "@higgsfield/quanta/media";
+import { Modal } from "@higgsfield/quanta/modal";
+import { Typography } from "@higgsfield/quanta/typography";
+import { cn } from "@/lib/utils";
 
 /**
  * TemplateModal — the "All Presets" picker (Figma SC App Builder, node
@@ -28,68 +28,68 @@ import { cn } from '@/lib/utils'
 
 export interface TemplateOption {
   /** Stable id used for selection + React keys. */
-  id: string
+  id: string;
   /** Label shown beneath the preview. */
-  label: string
+  label: string;
   /** Preview image source. */
-  image: string
+  image: string;
   /** Alt text for the preview (defaults to `label`). */
-  alt?: string
+  alt?: string;
 }
 
 const COLUMN_CLASS = {
-  2: 'grid-cols-2',
-  3: 'grid-cols-3',
-  4: 'grid-cols-4',
-  5: 'grid-cols-5',
-} as const
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+  4: "grid-cols-4",
+  5: "grid-cols-5",
+} as const;
 
-export type TemplateModalColumns = keyof typeof COLUMN_CLASS
+export type TemplateModalColumns = keyof typeof COLUMN_CLASS;
 
 export interface TemplateModalProps {
   /** The trigger element (e.g. a `Dropzone`/button). Rendered as the Modal trigger. */
-  trigger: ReactElement
+  trigger: ReactElement;
   /** Selectable option tiles. */
-  options: TemplateOption[]
+  options: TemplateOption[];
   /** Header title. */
-  title?: ReactNode
+  title?: ReactNode;
   /** Controlled selected id. */
-  value?: string
+  value?: string;
   /** Uncontrolled initial selected id. */
-  defaultValue?: string
+  defaultValue?: string;
   /** Fired when a tile is chosen. */
-  onSelect?: (option: TemplateOption) => void
+  onSelect?: (option: TemplateOption) => void;
   /** Grid columns (default 4, matching Figma). */
-  columns?: TemplateModalColumns
+  columns?: TemplateModalColumns;
   /** Close the modal once an option is chosen (default true). */
-  closeOnSelect?: boolean
+  closeOnSelect?: boolean;
   /** Start opened (uncontrolled) — handy for previews. */
-  defaultOpen?: boolean
+  defaultOpen?: boolean;
 }
 
 interface OptionCardProps {
-  option: TemplateOption
-  selected: boolean
-  closeOnSelect: boolean
-  onSelect: (option: TemplateOption) => void
+  option: TemplateOption;
+  selected: boolean;
+  closeOnSelect: boolean;
+  onSelect: (option: TemplateOption) => void;
 }
 
 /** A single selectable preset tile — preview + label, lime-ringed when active. */
 function OptionCard({ option, selected, closeOnSelect, onSelect }: OptionCardProps) {
   const className = cn(
-    'group flex flex-col gap-2 rounded-q-600 text-left transition-transform',
-    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-q-border-focus',
-  )
+    "group flex flex-col gap-2 rounded-q-600 text-left transition-transform",
+    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-q-border-focus",
+  );
   const children = (
     <>
       <Media
         ratio="auto"
         rounded="md"
         className={cn(
-          'h-60 w-full border-2 bg-q-background-secondary transition-colors',
+          "h-60 w-full border-2 bg-q-background-secondary transition-colors",
           selected
-            ? 'border-q-brand-primary'
-            : 'border-transparent group-hover:border-q-border-strong',
+            ? "border-q-brand-primary"
+            : "border-transparent group-hover:border-q-border-strong",
         )}
       >
         <Media.Image src={option.image} alt={option.alt ?? option.label} />
@@ -98,27 +98,25 @@ function OptionCard({ option, selected, closeOnSelect, onSelect }: OptionCardPro
         {option.label}
       </Typography>
     </>
-  )
+  );
 
-  const handleClick = () => onSelect(option)
+  const handleClick = () => onSelect(option);
 
-  return closeOnSelect
-    ? (
-        <Modal.Close className={className} onClick={handleClick} aria-pressed={selected}>
-          {children}
-        </Modal.Close>
-      )
-    : (
-        <button type="button" className={className} onClick={handleClick} aria-pressed={selected}>
-          {children}
-        </button>
-      )
+  return closeOnSelect ? (
+    <Modal.Close className={className} onClick={handleClick} aria-pressed={selected}>
+      {children}
+    </Modal.Close>
+  ) : (
+    <button type="button" className={className} onClick={handleClick} aria-pressed={selected}>
+      {children}
+    </button>
+  );
 }
 
 export function TemplateModal({
   trigger,
   options,
-  title = 'All Presets',
+  title = "All Presets",
   value,
   defaultValue,
   onSelect,
@@ -126,14 +124,13 @@ export function TemplateModal({
   closeOnSelect = true,
   defaultOpen,
 }: TemplateModalProps) {
-  const [internal, setInternal] = useState(defaultValue)
-  const selectedId = value ?? internal
+  const [internal, setInternal] = useState(defaultValue);
+  const selectedId = value ?? internal;
 
   const handleSelect = (option: TemplateOption) => {
-    if (value === undefined)
-      setInternal(option.id)
-    onSelect?.(option)
-  }
+    if (value === undefined) setInternal(option.id);
+    onSelect?.(option);
+  };
 
   return (
     <Modal.Root defaultOpen={defaultOpen}>
@@ -145,8 +142,8 @@ export function TemplateModal({
         </Modal.Header>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className={cn('grid gap-5 p-1', COLUMN_CLASS[columns])}>
-            {options.map(option => (
+          <div className={cn("grid gap-5 p-1", COLUMN_CLASS[columns])}>
+            {options.map((option) => (
               <OptionCard
                 key={option.id}
                 option={option}
@@ -159,5 +156,5 @@ export function TemplateModal({
         </div>
       </Modal.Content>
     </Modal.Root>
-  )
+  );
 }

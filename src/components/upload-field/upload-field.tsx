@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import type { ComponentPropsWithRef, ReactElement, ReactNode, Ref } from 'react'
-import { useRender } from '@base-ui/react/use-render'
-import IconCloseOutlined from '@material-symbols/svg-400/outlined/close.svg?react'
-import { Icon, type IconGlyph } from '@higgsfield/quanta/icon'
-import { Media } from '@higgsfield/quanta/media'
-import { Typography } from '@higgsfield/quanta/typography'
-import { cn } from '@/lib/utils'
+import type { ComponentPropsWithRef, ReactElement, ReactNode, Ref } from "react";
+import { useRender } from "@base-ui/react/use-render";
+import IconCloseOutlined from "@material-symbols/svg-400/outlined/close.svg?react";
+import { Icon, type IconGlyph } from "@higgsfield/quanta/icon";
+import { Media } from "@higgsfield/quanta/media";
+import { Typography } from "@higgsfield/quanta/typography";
+import { cn } from "@/lib/utils";
 
 /**
  * UploadField — the rail-style upload field (Figma SC App Builder "Media upload",
@@ -67,126 +67,118 @@ import { cn } from '@/lib/utils'
  * are kept as literal values; every color / radius / spacing uses `q-` tokens.
  */
 
-export type UploadFieldBorder = 'dashed' | 'solid'
+export type UploadFieldBorder = "dashed" | "solid";
 
 const BORDER_CLASS = {
-  dashed: 'border-dashed',
-  solid: 'border-solid',
-} satisfies Record<UploadFieldBorder, string>
+  dashed: "border-dashed",
+  solid: "border-solid",
+} satisfies Record<UploadFieldBorder, string>;
 
-export type UploadFieldProps = Omit<ComponentPropsWithRef<'div'>, 'title'> & {
+export type UploadFieldProps = Omit<ComponentPropsWithRef<"div">, "title"> & {
   /** Leading glyph shown in the rounded chip above the text (empty state). */
-  icon?: IconGlyph
+  icon?: IconGlyph;
   /** Bold primary line (empty state). */
-  title?: ReactNode
+  title?: ReactNode;
   /** Muted helper line under the title (empty state). */
-  subtitle?: ReactNode
+  subtitle?: ReactNode;
   /** Outline style — `dashed` upload target (default) or `solid` picker. */
-  border?: UploadFieldBorder
+  border?: UploadFieldBorder;
   /**
    * Filled state. Pass a picked image `src` (rendered as a white-ringed `Media`
    * preview) or a custom node. When set, the icon / title / subtitle empty state
    * is replaced by the preview.
    */
-  preview?: ReactNode
+  preview?: ReactNode;
   /** Alt text for the string `preview` image. */
-  previewAlt?: string
+  previewAlt?: string;
   /**
    * Show the floating remove (X) button over the filled tile. Fired when it is
    * clicked. Only rendered together with `preview`.
    */
-  onRemove?: () => void
+  onRemove?: () => void;
   /** Swap the host element (e.g. an interactive `<button>` for the modal trigger). */
-  render?: ReactElement
-}
+  render?: ReactElement;
+};
 
 export function UploadField({
   icon,
   title,
   subtitle,
-  border = 'dashed',
+  border = "dashed",
   preview,
-  previewAlt = '',
+  previewAlt = "",
   onRemove,
   className,
   render,
   ref,
   ...props
 }: UploadFieldProps) {
-  const interactive = render != null
-  const filled = preview != null
+  const interactive = render != null;
+  const filled = preview != null;
 
-  const previewNode = typeof preview === 'string'
-    ? (
-        <div className="overflow-hidden rounded-q-300 border-2 border-white shadow-q-raised">
-          <Media ratio="video" rounded="none" className="w-44 max-w-full">
-            <Media.Image src={preview} alt={previewAlt} />
-          </Media>
-        </div>
-      )
-    : preview
+  const previewNode =
+    typeof preview === "string" ? (
+      <div className="overflow-hidden rounded-q-300 border-2 border-white shadow-q-raised">
+        <Media ratio="video" rounded="none" className="w-44 max-w-full">
+          <Media.Image src={preview} alt={previewAlt} />
+        </Media>
+      </div>
+    ) : (
+      preview
+    );
 
   return useRender({
     render,
-    defaultTagName: 'div',
+    defaultTagName: "div",
     ref: ref as Ref<Element> | undefined,
     props: {
       className: cn(
         // Figma field 3313:51351: 1.5px white-10% outline, white-10% glass +
         // 12px backdrop blur, radius/400, drop shadow + inner sheen.
-        'relative flex min-h-36 flex-1 flex-col items-center justify-center gap-3 rounded-q-400 border-[1.5px] border-q-border-default bg-q-transparent-light-10 px-4 pt-6 pb-5 text-center backdrop-blur-md transition-colors shadow-[0px_2px_4px_-0.5px_rgba(0,0,0,0.12),inset_0px_2px_3px_0px_rgba(255,255,255,0.05)]',
+        "relative flex min-h-36 flex-1 flex-col items-center justify-center gap-3 rounded-q-400 border-[1.5px] border-q-border-default bg-q-transparent-light-10 px-4 pt-6 pb-5 text-center backdrop-blur-md transition-colors shadow-[0px_2px_4px_-0.5px_rgba(0,0,0,0.12),inset_0px_2px_3px_0px_rgba(255,255,255,0.05)]",
         BORDER_CLASS[border],
-        interactive && 'cursor-pointer hover:border-q-border-strong hover:bg-q-transparent-light-15 focus-visible:outline-2 focus-visible:outline-q-border-focus',
+        interactive &&
+          "cursor-pointer hover:border-q-border-strong hover:bg-q-transparent-light-15 focus-visible:outline-2 focus-visible:outline-q-border-focus",
         className,
       ),
-      children: filled
-        ? (
-            <>
-              {previewNode}
-              {onRemove != null
-                ? (
-                    <button
-                      type="button"
-                      aria-label="Remove"
-                      onClick={onRemove}
-                      className="absolute top-2 right-2 flex items-center justify-center rounded-q-200 bg-q-transparent-dark-40 p-1.5 backdrop-blur-md transition-colors hover:bg-q-transparent-dark-60 focus-visible:outline-2 focus-visible:outline-q-border-focus"
-                    >
-                      <Icon as={IconCloseOutlined} size="sm" color="primary" />
-                    </button>
-                  )
-                : null}
-            </>
-          )
-        : (
-            <>
-              {icon != null
-                ? (
-                    // Figma icon chip 3313:51410: white-5% fill, #c5c5c5-30% ring,
-                    // dual drop shadow + inner bottom glow, full-round.
-                    <span className="flex items-center justify-center rounded-q-full border border-[#c5c5c54d] bg-q-transparent-light-05 p-2.5 shadow-[0px_20.533px_10.266px_0px_rgba(0,0,0,0.09),0px_5.059px_5.654px_0px_rgba(0,0,0,0.1),inset_0px_-0.298px_5.356px_0px_rgba(185,185,185,0.35)]">
-                      <Icon as={icon} size="md" color="primary" />
-                    </span>
-                  )
-                : null}
-              <div className="flex flex-col items-center gap-1">
-                {title != null
-                  ? (
-                      <Typography as="span" variant="body-md-medium" color="primary">
-                        {title}
-                      </Typography>
-                    )
-                  : null}
-                {subtitle != null
-                  ? (
-                      <Typography as="span" variant="body-sm-medium" color="secondary">
-                        {subtitle}
-                      </Typography>
-                    )
-                  : null}
-              </div>
-            </>
-          ),
+      children: filled ? (
+        <>
+          {previewNode}
+          {onRemove != null ? (
+            <button
+              type="button"
+              aria-label="Remove"
+              onClick={onRemove}
+              className="absolute top-2 right-2 flex items-center justify-center rounded-q-200 bg-q-transparent-dark-40 p-1.5 backdrop-blur-md transition-colors hover:bg-q-transparent-dark-60 focus-visible:outline-2 focus-visible:outline-q-border-focus"
+            >
+              <Icon as={IconCloseOutlined} size="sm" color="primary" />
+            </button>
+          ) : null}
+        </>
+      ) : (
+        <>
+          {icon != null ? (
+            // Figma icon chip 3313:51410: white-5% fill, #c5c5c5-30% ring,
+            // dual drop shadow + inner bottom glow, full-round.
+            <span className="flex items-center justify-center rounded-q-full border border-[#c5c5c54d] bg-q-transparent-light-05 p-2.5 shadow-[0px_20.533px_10.266px_0px_rgba(0,0,0,0.09),0px_5.059px_5.654px_0px_rgba(0,0,0,0.1),inset_0px_-0.298px_5.356px_0px_rgba(185,185,185,0.35)]">
+              <Icon as={icon} size="md" color="primary" />
+            </span>
+          ) : null}
+          <div className="flex flex-col items-center gap-1">
+            {title != null ? (
+              <Typography as="span" variant="body-md-medium" color="primary">
+                {title}
+              </Typography>
+            ) : null}
+            {subtitle != null ? (
+              <Typography as="span" variant="body-sm-medium" color="secondary">
+                {subtitle}
+              </Typography>
+            ) : null}
+          </div>
+        </>
+      ),
       ...props,
     },
-  })
+  });
 }

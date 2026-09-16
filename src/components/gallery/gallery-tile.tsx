@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
-import type { CSSProperties } from 'react'
-import IconPlayArrow from '@material-symbols/svg-400/outlined/play_arrow.svg?react'
-import IconVideocam from '@material-symbols/svg-400/outlined/videocam.svg?react'
-import { Icon } from '@higgsfield/quanta/icon'
-import { GenerationCard } from '@/components/generation-card'
-import { GenerationDetailModal } from '@/components/generation-detail'
-import type { TileRect } from './justified-engine.ts'
-import type { GalleryItem, LoadTier } from './types.ts'
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import IconPlayArrow from "@material-symbols/svg-400/outlined/play_arrow.svg?react";
+import IconVideocam from "@material-symbols/svg-400/outlined/videocam.svg?react";
+import { Icon } from "@higgsfield/quanta/icon";
+import { GenerationCard } from "@/components/generation-card";
+import { GenerationDetailModal } from "@/components/generation-detail";
+import type { TileRect } from "./justified-engine.ts";
+import type { GalleryItem, LoadTier } from "./types.ts";
 
 /**
  * One gallery tile. It is absolutely positioned at the engine-computed rect and
@@ -21,13 +21,13 @@ import type { GalleryItem, LoadTier } from './types.ts'
  */
 
 export interface GalleryTileProps {
-  item: GalleryItem
-  rect: TileRect
+  item: GalleryItem;
+  rect: TileRect;
   /** Row top, in content coordinates (the rect's x is row-relative). */
-  top: number
-  tier: LoadTier
-  fastScroll: boolean
-  reducedMotion: boolean
+  top: number;
+  tier: LoadTier;
+  fastScroll: boolean;
+  reducedMotion: boolean;
 }
 
 function rectStyle(rect: TileRect, top: number, tint: string): CSSProperties {
@@ -37,34 +37,44 @@ function rectStyle(rect: TileRect, top: number, tint: string): CSSProperties {
     width: rect.width,
     height: rect.height,
     // Consumed by the .qg-placeholder / .qg-tile background.
-    ['--qg-tint' as string]: tint,
-  } as CSSProperties
+    ["--qg-tint" as string]: tint,
+  } as CSSProperties;
 }
 
 /** A cheap solid placeholder — shown during fast flings and before media loads. */
 function Placeholder({ shimmer }: { shimmer: boolean }) {
-  return <span className="qg-placeholder" data-shimmer={shimmer ? 'true' : 'false'} aria-hidden="true" />
+  return (
+    <span className="qg-placeholder" data-shimmer={shimmer ? "true" : "false"} aria-hidden="true" />
+  );
 }
 
 /** Still image with a placeholder→full fade and tier-driven load priority. */
-function StillMedia({ item, tier, fastScroll }: { item: GalleryItem, tier: LoadTier, fastScroll: boolean }) {
-  const [loaded, setLoaded] = useState(false)
+function StillMedia({
+  item,
+  tier,
+  fastScroll,
+}: {
+  item: GalleryItem;
+  tier: LoadTier;
+  fastScroll: boolean;
+}) {
+  const [loaded, setLoaded] = useState(false);
   return (
     <>
       <Placeholder shimmer={fastScroll} />
       {!fastScroll && (
         <img
           className="qg-media absolute inset-0 size-full object-cover"
-          data-loaded={loaded ? 'true' : 'false'}
+          data-loaded={loaded ? "true" : "false"}
           src={item.src}
           alt={item.alt}
-          loading={tier === 'full' ? 'eager' : 'lazy'}
+          loading={tier === "full" ? "eager" : "lazy"}
           decoding="async"
           onLoad={() => setLoaded(true)}
         />
       )}
     </>
-  )
+  );
 }
 
 /**
@@ -79,30 +89,28 @@ function HoverVideo({
   playing,
   reducedMotion,
 }: {
-  item: GalleryItem
-  tier: LoadTier
-  fastScroll: boolean
-  playing: boolean
-  reducedMotion: boolean
+  item: GalleryItem;
+  tier: LoadTier;
+  fastScroll: boolean;
+  playing: boolean;
+  reducedMotion: boolean;
 }) {
-  const ref = useRef<HTMLVideoElement | null>(null)
-  const [posterLoaded, setPosterLoaded] = useState(false)
-  const active = playing && !reducedMotion
+  const ref = useRef<HTMLVideoElement | null>(null);
+  const [posterLoaded, setPosterLoaded] = useState(false);
+  const active = playing && !reducedMotion;
 
   useEffect(() => {
-    const v = ref.current
-    if (v == null) return
+    const v = ref.current;
+    if (v == null) return;
     if (active) {
-      void v.play()?.catch(() => {})
-    }
-    else {
-      v.pause()
+      void v.play()?.catch(() => {});
+    } else {
+      v.pause();
       try {
-        v.currentTime = 0
-      }
-      catch {}
+        v.currentTime = 0;
+      } catch {}
     }
-  }, [active])
+  }, [active]);
 
   return (
     <>
@@ -110,10 +118,10 @@ function HoverVideo({
       {!fastScroll && (
         <img
           className="qg-media absolute inset-0 size-full object-cover"
-          data-loaded={posterLoaded ? 'true' : 'false'}
+          data-loaded={posterLoaded ? "true" : "false"}
           src={item.src}
           alt={item.alt}
-          loading={tier === 'full' ? 'eager' : 'lazy'}
+          loading={tier === "full" ? "eager" : "lazy"}
           decoding="async"
           onLoad={() => setPosterLoaded(true)}
           style={{ opacity: active ? 0 : undefined }}
@@ -142,13 +150,20 @@ function HoverVideo({
         <Icon as={playing ? IconPlayArrow : IconVideocam} size="sm" />
       </span>
     </>
-  )
+  );
 }
 
-export function GalleryTile({ item, rect, top, tier, fastScroll, reducedMotion }: GalleryTileProps) {
-  const [hovered, setHovered] = useState(false)
+export function GalleryTile({
+  item,
+  rect,
+  top,
+  tier,
+  fastScroll,
+  reducedMotion,
+}: GalleryTileProps) {
+  const [hovered, setHovered] = useState(false);
 
-  if (item.status === 'generating') {
+  if (item.status === "generating") {
     return (
       <GenerationCard
         state="generating"
@@ -156,28 +171,32 @@ export function GalleryTile({ item, rect, top, tier, fastScroll, reducedMotion }
         className="qg-tile"
         style={rectStyle(rect, top, item.tint)}
       />
-    )
+    );
   }
 
-  const isVideo = item.kind === 'video'
-  const media = isVideo
-    ? (
-        <HoverVideo item={item} tier={tier} fastScroll={fastScroll} playing={hovered} reducedMotion={reducedMotion} />
-      )
-    : (
-        <StillMedia item={item} tier={tier} fastScroll={fastScroll} />
-      )
+  const isVideo = item.kind === "video";
+  const media = isVideo ? (
+    <HoverVideo
+      item={item}
+      tier={tier}
+      fastScroll={fastScroll}
+      playing={hovered}
+      reducedMotion={reducedMotion}
+    />
+  ) : (
+    <StillMedia item={item} tier={tier} fastScroll={fastScroll} />
+  );
 
   return (
     <GenerationDetailModal
       generation={{
         src: isVideo ? (item.videoSrc ?? item.src) : item.src,
         poster: isVideo ? item.src : undefined,
-        mediaType: isVideo ? 'video' : 'image',
+        mediaType: isVideo ? "video" : "image",
         aspectRatio: item.width / item.height,
         prompt: item.prompt,
       }}
-      trigger={(
+      trigger={
         <GenerationCard
           render={<button type="button" />}
           ratio="auto"
@@ -190,7 +209,7 @@ export function GalleryTile({ item, rect, top, tier, fastScroll, reducedMotion }
           onFocus={isVideo ? () => setHovered(true) : undefined}
           onBlur={isVideo ? () => setHovered(false) : undefined}
         />
-      )}
+      }
     />
-  )
+  );
 }

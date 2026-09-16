@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import type { ComponentPropsWithRef, ReactElement, ReactNode, Ref } from 'react'
-import { useRender } from '@base-ui/react/use-render'
-import ChevronIcon from '@material-symbols/svg-400/outlined/chevron_right.svg?react'
-import { Icon } from '@higgsfield/quanta/icon'
-import { cn as cx } from '@/lib/utils'
+import type { ComponentPropsWithRef, ReactElement, ReactNode, Ref } from "react";
+import { useRender } from "@base-ui/react/use-render";
+import ChevronIcon from "@material-symbols/svg-400/outlined/chevron_right.svg?react";
+import { Icon } from "@higgsfield/quanta/icon";
+import { cn as cx } from "@/lib/utils";
 
 /**
  * SettingTrigger — a compact labelled value row that OPENS a picker (Figma
@@ -38,23 +38,23 @@ import { cn as cx } from '@/lib/utils'
  * `useRender`); the default is a real `<button type="button">`.
  */
 
-export type SettingTriggerProps = Omit<ComponentPropsWithRef<'button'>, 'children'> & {
+export type SettingTriggerProps = Omit<ComponentPropsWithRef<"button">, "children"> & {
   /** Caption above the value. Any node. */
-  label?: ReactNode
+  label?: ReactNode;
   /** The current value. Any node. When null/undefined, `placeholder` shows. */
-  children?: ReactNode
+  children?: ReactNode;
   /** Muted text shown while there is no value. */
-  placeholder?: ReactNode
+  placeholder?: ReactNode;
   /** Leading slot (20px icon, any node) before the label/value stack. */
-  start?: ReactNode
+  start?: ReactNode;
   /** Trailing slot — defaults to the 16px chevron-right glyph. */
-  end?: ReactNode
+  end?: ReactNode;
   /**
    * Swap the root element/component while keeping the row styling — e.g. an
    * `<a>` or a framework `<Link>`. Defaults to a `<button type="button">`.
    */
-  render?: ReactElement
-}
+  render?: ReactElement;
+};
 
 export function SettingTrigger({
   label,
@@ -67,33 +67,31 @@ export function SettingTrigger({
   ref,
   ...props
 }: SettingTriggerProps) {
-  const isEmpty = children == null
+  const isEmpty = children == null;
   const content = (
     <>
       {start != null ? <span className="q-setting-trigger-start">{start}</span> : null}
       <span className="q-setting-trigger-body">
         {label != null ? <span className="q-setting-trigger-label">{label}</span> : null}
-        <span className={cx('q-setting-trigger-value', isEmpty && 'q-setting-trigger-placeholder')}>
+        <span className={cx("q-setting-trigger-value", isEmpty && "q-setting-trigger-placeholder")}>
           {isEmpty ? placeholder : children}
         </span>
       </span>
-      <span className="q-setting-trigger-end">
-        {end ?? <Icon size="sm" as={ChevronIcon} />}
-      </span>
+      <span className="q-setting-trigger-end">{end ?? <Icon size="sm" as={ChevronIcon} />}</span>
     </>
-  )
+  );
 
   // Only the default host is a real <button> and gets the implicit type;
   // a `render` element owns its own semantics.
   return useRender({
     render,
-    defaultTagName: 'button',
+    defaultTagName: "button",
     ref: ref as Ref<Element> | undefined,
     props: {
-      className: cx('q-setting-trigger', className),
-      ...(render == null ? { type: 'button' as const } : {}),
+      className: cx("q-setting-trigger", className),
+      ...(render == null ? { type: "button" as const } : {}),
       children: content,
       ...props,
     },
-  })
+  });
 }
