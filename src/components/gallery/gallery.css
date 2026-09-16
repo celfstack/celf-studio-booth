@@ -39,8 +39,8 @@
 
 /* A subtle sweep while a fast fling is in progress, so the placeholders read
  * as "loading" rather than broken. Honors reduced-motion. */
-.qg-placeholder[data-shimmer='true']::after {
-  content: '';
+.qg-placeholder[data-shimmer="true"]::after {
+  content: "";
   position: absolute;
   inset: 0;
   background-image: linear-gradient(
@@ -54,8 +54,12 @@
 }
 
 @keyframes qg-shimmer {
-  0% { background-position: 180% 0; }
-  100% { background-position: -80% 0; }
+  0% {
+    background-position: 180% 0;
+  }
+  100% {
+    background-position: -80% 0;
+  }
 }
 
 /* Media fades in once loaded so a hydrating tile doesn't pop. */
@@ -63,7 +67,7 @@
   opacity: 0;
   transition: opacity var(--hf-duration-400, 200ms) ease-out;
 }
-.qg-media[data-loaded='true'] {
+.qg-media[data-loaded="true"] {
   opacity: 1;
 }
 
@@ -71,7 +75,7 @@
   .qg-viewport {
     scroll-behavior: auto;
   }
-  .qg-placeholder[data-shimmer='true']::after {
+  .qg-placeholder[data-shimmer="true"]::after {
     animation: none;
   }
   .qg-media {

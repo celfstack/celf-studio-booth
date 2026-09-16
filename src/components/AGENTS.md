@@ -51,24 +51,24 @@ route or layout.
 
 ## Component catalog
 
-| Component | Import | What it is |
-| --- | --- | --- |
-| `AssetLibraryModal` | `@/components/asset-library` | THE asset picker modal (tabs header, All/Personal toolbar, element grid). Opens from any upload/attach/plus trigger. `onSelect` reports the picked asset. |
-| `TemplateModal` | `@/components/template-modal` | Generic "choose one option" modal — grid of image tiles, lime ring on the active one. |
-| `GenerationCard` | `@/components/generation-card` | A generation tile: `state="generating"` (pulsing brand glow + status pill) or ready (media + optional title). |
-| `GenerationDetailModal` | `@/components/generation-detail` | Fullscreen-ish detail view of one generation (preview + metadata rows + actions). Trigger-based like the modals above. |
-| `HistoryGrid` | `@/components/history-grid` | THE History section: the current user's OWN generations in this app (personal — never other users' work), as the batch-grouped `GenerationCard` grid. Every History tab/page renders this grid, not a custom layout. |
-| `Dropzone` / `DropzonePreview` | `@/components/dropzone` | Bordered upload/select tile (icon → title → subtitle); `preview` shows the after-selection state. THE upload tile for the app-detail generator hero. Pair as the trigger of `AssetLibraryModal` / `TemplateModal`. |
-| `UploadField` | `@/components/upload-field` | THE rail-style upload field for creation rails / input panels (Figma "Media upload", 3322:51742): rail-width bordered tile — icon-chip → title → subtitle empty state, white-ringed `preview` + remove (X) filled state. Use it (never a hand-rolled field) as the `AssetLibraryModal` trigger in any `InputPanel`-style rail. |
-| `RailFooter` | `@/components/rail-footer` | The pinned Generate CTA footer for a creation rail: `sticky bottom-0` with a gradient scrim (rail surface → transparent) so the CTA stays reachable and the fields fade under it when the rail overflows; sits inline at the bottom when they fit. Wrap the `marketingPrimary` Generate button as its children. |
-| `Composer` | `@/components/composer` | Tall side-rail prompt pane with a footer action row (`Composer.Action` pills). |
-| `PromptBox` | `@/components/prompt-box` | Wide bottom prompt dock (mode rail, setting pills, upload tiles, GENERATE). |
-| `MediaCard` | `@/components/media-card` | Cover/preview card with title + action, used in creation rails and preset galleries. `ratio` picks the media aspect — landscape (`video`) or portrait (`9/16` etc.). |
-| `TemplatePickerModal` / `TemplateCard` | `@/components/template-picker` | Tabbed, searchable template gallery (Studio-style triptych cards). |
-| `SettingTrigger` | `@/components/setting-trigger` | Labelled setting row that opens a picker. |
-| `StepRail` | `@/components/step-rail` | Numbered multi-step wizard indicator (e.g. Upload → Grid → Upscale): drives which panel renders; completed steps show a brand check, reached steps are clickable. Used by the Shots layout. |
-| `BeforeAfterCompare` | `@/components/before-after-compare` | Draggable before/after comparison slider (original ↔ result) with pointer + keyboard (`role="slider"`) control. THE component for enhance/retouch/restore/upscale before↔after payoffs. Used by the Skin Enhancer layout. |
-| `IconTile` | `@/components/icon-tile` | Small gradient icon tile used in sidebars / nav rows. |
+| Component                              | Import                              | What it is                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `AssetLibraryModal`                    | `@/components/asset-library`        | THE asset picker modal (tabs header, All/Personal toolbar, element grid). Opens from any upload/attach/plus trigger. `onSelect` reports the picked asset.                                                                                                                                                                      |
+| `TemplateModal`                        | `@/components/template-modal`       | Generic "choose one option" modal — grid of image tiles, lime ring on the active one.                                                                                                                                                                                                                                          |
+| `GenerationCard`                       | `@/components/generation-card`      | A generation tile: `state="generating"` (pulsing brand glow + status pill) or ready (media + optional title).                                                                                                                                                                                                                  |
+| `GenerationDetailModal`                | `@/components/generation-detail`    | Fullscreen-ish detail view of one generation (preview + metadata rows + actions). Trigger-based like the modals above.                                                                                                                                                                                                         |
+| `HistoryGrid`                          | `@/components/history-grid`         | THE History section: the current user's OWN generations in this app (personal — never other users' work), as the batch-grouped `GenerationCard` grid. Every History tab/page renders this grid, not a custom layout.                                                                                                           |
+| `Dropzone` / `DropzonePreview`         | `@/components/dropzone`             | Bordered upload/select tile (icon → title → subtitle); `preview` shows the after-selection state. THE upload tile for the app-detail generator hero. Pair as the trigger of `AssetLibraryModal` / `TemplateModal`.                                                                                                             |
+| `UploadField`                          | `@/components/upload-field`         | THE rail-style upload field for creation rails / input panels (Figma "Media upload", 3322:51742): rail-width bordered tile — icon-chip → title → subtitle empty state, white-ringed `preview` + remove (X) filled state. Use it (never a hand-rolled field) as the `AssetLibraryModal` trigger in any `InputPanel`-style rail. |
+| `RailFooter`                           | `@/components/rail-footer`          | The pinned Generate CTA footer for a creation rail: `sticky bottom-0` with a gradient scrim (rail surface → transparent) so the CTA stays reachable and the fields fade under it when the rail overflows; sits inline at the bottom when they fit. Wrap the `marketingPrimary` Generate button as its children.                |
+| `Composer`                             | `@/components/composer`             | Tall side-rail prompt pane with a footer action row (`Composer.Action` pills).                                                                                                                                                                                                                                                 |
+| `PromptBox`                            | `@/components/prompt-box`           | Wide bottom prompt dock (mode rail, setting pills, upload tiles, GENERATE).                                                                                                                                                                                                                                                    |
+| `MediaCard`                            | `@/components/media-card`           | Cover/preview card with title + action, used in creation rails and preset galleries. `ratio` picks the media aspect — landscape (`video`) or portrait (`9/16` etc.).                                                                                                                                                           |
+| `TemplatePickerModal` / `TemplateCard` | `@/components/template-picker`      | Tabbed, searchable template gallery (Studio-style triptych cards).                                                                                                                                                                                                                                                             |
+| `SettingTrigger`                       | `@/components/setting-trigger`      | Labelled setting row that opens a picker.                                                                                                                                                                                                                                                                                      |
+| `StepRail`                             | `@/components/step-rail`            | Numbered multi-step wizard indicator (e.g. Upload → Grid → Upscale): drives which panel renders; completed steps show a brand check, reached steps are clickable. Used by the Shots layout.                                                                                                                                    |
+| `BeforeAfterCompare`                   | `@/components/before-after-compare` | Draggable before/after comparison slider (original ↔ result) with pointer + keyboard (`role="slider"`) control. THE component for enhance/retouch/restore/upscale before↔after payoffs. Used by the Skin Enhancer layout.                                                                                                      |
+| `IconTile`                             | `@/components/icon-tile`            | Small gradient icon tile used in sidebars / nav rows.                                                                                                                                                                                                                                                                          |
 
 ## Preset tiles: horizontal or vertical orientation
 
@@ -140,14 +140,18 @@ make it forward props, or wrap: `trigger={<button type="button" className="conte
 One state machine, same visuals in every app: `idle → generating → result`.
 
 ```tsx
-import { GenerationCard } from '@/components/generation-card'
+import { GenerationCard } from "@/components/generation-card";
 
-{stage === 'generating' && <GenerationCard state="generating" ratio="portrait" />}
-{stage === 'result' && (
-  <GenerationCard src={resultUrl} alt="Result" className="group">
-    {/* optional hover overlays composed as children */}
-  </GenerationCard>
-)}
+{
+  stage === "generating" && <GenerationCard state="generating" ratio="portrait" />;
+}
+{
+  stage === "result" && (
+    <GenerationCard src={resultUrl} alt="Result" className="group">
+      {/* optional hover overlays composed as children */}
+    </GenerationCard>
+  );
+}
 ```
 
 For real backend wiring (submit, polling, uploads) read

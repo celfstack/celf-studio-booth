@@ -29,7 +29,9 @@
   padding: var(--hf-space-100);
   border-radius: var(--hf-radius-600);
   background-color: var(--hf-color-background-secondary);
-  box-shadow: 0 4px 2px rgba(0, 0, 0, 0.16), 0 4px 6px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 2px rgba(0, 0, 0, 0.16),
+    0 4px 6px rgba(0, 0, 0, 0.08);
 }
 
 @utility q-prompt-box-dock-surface {
@@ -63,7 +65,9 @@
   padding: var(--hf-space-100);
   border-radius: var(--hf-radius-600);
   background-color: var(--hf-color-background-secondary);
-  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 4px rgba(0, 0, 0, 0.16),
+    0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 @utility q-prompt-box-mode {

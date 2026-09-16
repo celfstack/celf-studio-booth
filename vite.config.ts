@@ -37,9 +37,7 @@ export default defineConfig(({ mode }) => {
           icon: true,
           svgProps: { fill: "currentColor" },
           svgoConfig: {
-            plugins: [
-              { name: "preset-default", params: { overrides: { removeViewBox: false } } },
-            ],
+            plugins: [{ name: "preset-default", params: { overrides: { removeViewBox: false } } }],
           },
         },
       }),

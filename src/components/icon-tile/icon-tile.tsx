@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import type { ComponentPropsWithRef } from 'react'
-import { Icon } from '@higgsfield/quanta/icon'
-import type { IconGlyph } from '@higgsfield/quanta/icon'
-import { cn as cx } from '@/lib/utils'
+import type { ComponentPropsWithRef } from "react";
+import { Icon } from "@higgsfield/quanta/icon";
+import type { IconGlyph } from "@higgsfield/quanta/icon";
+import { cn as cx } from "@/lib/utils";
 
 /**
  * IconTile — a 24px leading tile with a glyph centered inside a box, for
@@ -25,7 +25,7 @@ import { cn as cx } from '@/lib/utils'
  * decorative, so the row label carries the meaning.
  */
 
-export type IconTileGradient = 'blue' | 'teal'
+export type IconTileGradient = "blue" | "teal";
 
 /**
  * Brand gradient presets for the colored tile. The stops are bespoke branded
@@ -33,33 +33,42 @@ export type IconTileGradient = 'blue' | 'teal'
  * a colored icon tile shares the exact same fills.
  */
 export const ICON_TILE_GRADIENT: Record<IconTileGradient, string> = {
-  blue: 'linear-gradient(135deg, rgb(65, 136, 190) 0%, rgb(14, 39, 114) 100%)',
-  teal: 'linear-gradient(135deg, rgb(81, 226, 224) 3.8675%, rgb(18, 92, 141) 93.451%)',
-}
+  blue: "linear-gradient(135deg, rgb(65, 136, 190) 0%, rgb(14, 39, 114) 100%)",
+  teal: "linear-gradient(135deg, rgb(81, 226, 224) 3.8675%, rgb(18, 92, 141) 93.451%)",
+};
 
-export type IconTileProps = ComponentPropsWithRef<'span'> & {
+export type IconTileProps = ComponentPropsWithRef<"span"> & {
   /** Glyph painted at 16px (white on gradient, `secondary` on neutral). */
-  as: IconGlyph
+  as: IconGlyph;
   /**
    * Colored gradient backing — a brand preset (`'blue'` / `'teal'`) or any CSS
    * gradient string. Omit for the neutral (white-5% raised) tile.
    */
-  gradient?: IconTileGradient | (string & {})
-}
+  gradient?: IconTileGradient | (string & {});
+};
 
 export function IconTile({ as, gradient, className, style, ...props }: IconTileProps) {
-  const isGradient = gradient != null
+  const isGradient = gradient != null;
   const backgroundImage = isGradient
     ? (ICON_TILE_GRADIENT[gradient as IconTileGradient] ?? gradient)
-    : undefined
+    : undefined;
 
   return (
     <span
-      className={cx('q-icon-tile', isGradient ? 'q-icon-tile-gradient' : 'q-icon-tile-neutral', className)}
+      className={cx(
+        "q-icon-tile",
+        isGradient ? "q-icon-tile-gradient" : "q-icon-tile-neutral",
+        className,
+      )}
       style={isGradient ? { backgroundImage, ...style } : style}
       {...props}
     >
-      <Icon as={as} size="sm" color={isGradient ? undefined : 'secondary'} className="q-icon-tile-glyph" />
+      <Icon
+        as={as}
+        size="sm"
+        color={isGradient ? undefined : "secondary"}
+        className="q-icon-tile-glyph"
+      />
     </span>
-  )
+  );
 }

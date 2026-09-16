@@ -1,15 +1,15 @@
-import type { ChangeEvent, ReactElement } from 'react'
-import { useRef } from 'react'
-import IconMagnifyingGlassOutlined from '@material-symbols/svg-400/outlined/search.svg?react'
-import IconPlusMediumOutlined from '@material-symbols/svg-400/outlined/add.svg?react'
-import { Avatar } from '@higgsfield/quanta/avatar'
-import type { AvatarColor } from '@higgsfield/quanta/avatar'
-import { Button } from '@higgsfield/quanta/button'
-import { Icon } from '@higgsfield/quanta/icon'
-import { Media } from '@higgsfield/quanta/media'
-import { Modal } from '@higgsfield/quanta/modal'
-import { Tabs } from '@higgsfield/quanta/tabs'
-import { Typography } from '@higgsfield/quanta/typography'
+import type { ChangeEvent, ReactElement } from "react";
+import { useRef } from "react";
+import IconMagnifyingGlassOutlined from "@material-symbols/svg-400/outlined/search.svg?react";
+import IconPlusMediumOutlined from "@material-symbols/svg-400/outlined/add.svg?react";
+import { Avatar } from "@higgsfield/quanta/avatar";
+import type { AvatarColor } from "@higgsfield/quanta/avatar";
+import { Button } from "@higgsfield/quanta/button";
+import { Icon } from "@higgsfield/quanta/icon";
+import { Media } from "@higgsfield/quanta/media";
+import { Modal } from "@higgsfield/quanta/modal";
+import { Tabs } from "@higgsfield/quanta/tabs";
+import { Typography } from "@higgsfield/quanta/typography";
 
 /**
  * Asset Library modal — Figma SC App Builder "Share Modal" (node 2125:15262).
@@ -33,38 +33,38 @@ import { Typography } from '@higgsfield/quanta/typography'
  */
 
 const THUMBS = [
-  '/presets/how-product-works.png',
-  '/presets/explain.png',
-  '/presets/hyper-motion.png',
-  '/presets/cover.png',
-]
+  "/presets/how-product-works.png",
+  "/presets/explain.png",
+  "/presets/hyper-motion.png",
+  "/presets/cover.png",
+];
 
 const HEADER_TABS = [
-  { value: 'uploads', label: 'Uploads' },
-  { value: 'image', label: 'Image Generations' },
-  { value: 'video', label: 'Video Generations' },
-  { value: 'liked', label: 'Liked' },
-]
+  { value: "uploads", label: "Uploads" },
+  { value: "image", label: "Image Generations" },
+  { value: "video", label: "Video Generations" },
+  { value: "liked", label: "Liked" },
+];
 
 type ElementItem = {
-  name: string
-  type: string
-  src: string
-  badge?: string
-  badgeColor?: AvatarColor
-}
+  name: string;
+  type: string;
+  src: string;
+  badge?: string;
+  badgeColor?: AvatarColor;
+};
 
 const ELEMENTS: ElementItem[] = [
-  { name: '@Ultraviolet', type: 'Location', src: THUMBS[0], badge: 'T', badgeColor: 'pink' },
-  { name: '@Ultraviolet', type: 'Character', src: THUMBS[1], badge: 'C', badgeColor: 'mint' },
-  { name: '@Ultraviolet', type: 'Location', src: THUMBS[2] },
-  { name: '@Ultraviolet', type: 'Location', src: THUMBS[3] },
-  { name: '@Ultraviolet', type: 'Location', src: THUMBS[2], badge: 'G', badgeColor: 'mint' },
-  { name: '@Ultraviolet', type: 'Location', src: THUMBS[1], badge: 'A', badgeColor: 'blue' },
-  { name: '@Ultraviolet', type: 'Location', src: THUMBS[0] },
-  { name: '@Ultraviolet', type: 'Location', src: THUMBS[0] },
-  { name: '@Ultraviolet', type: 'Location', src: THUMBS[0] },
-]
+  { name: "@Ultraviolet", type: "Location", src: THUMBS[0], badge: "T", badgeColor: "pink" },
+  { name: "@Ultraviolet", type: "Character", src: THUMBS[1], badge: "C", badgeColor: "mint" },
+  { name: "@Ultraviolet", type: "Location", src: THUMBS[2] },
+  { name: "@Ultraviolet", type: "Location", src: THUMBS[3] },
+  { name: "@Ultraviolet", type: "Location", src: THUMBS[2], badge: "G", badgeColor: "mint" },
+  { name: "@Ultraviolet", type: "Location", src: THUMBS[1], badge: "A", badgeColor: "blue" },
+  { name: "@Ultraviolet", type: "Location", src: THUMBS[0] },
+  { name: "@Ultraviolet", type: "Location", src: THUMBS[0] },
+  { name: "@Ultraviolet", type: "Location", src: THUMBS[0] },
+];
 
 /* ── Toolbar ────────────────────────────────────────────────────────────────── */
 
@@ -75,39 +75,43 @@ function AssetToolbar() {
         <Tabs.Root variant="pill" defaultValue="all">
           <Tabs.List
             items={[
-              { value: 'all', label: 'All' },
-              { value: 'personal', label: 'Personal' },
+              { value: "all", label: "All" },
+              { value: "personal", label: "Personal" },
             ]}
           />
         </Tabs.Root>
       </div>
       <div className="flex items-center gap-1">
-        <Button variant="tertiary" size="sm" start={<Icon as={IconMagnifyingGlassOutlined} size="sm" />}>
+        <Button
+          variant="tertiary"
+          size="sm"
+          start={<Icon as={IconMagnifyingGlassOutlined} size="sm" />}
+        >
           Search
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
 /* ── Grid ───────────────────────────────────────────────────────────────────── */
 
 function NewElementCard({ onSelect }: { onSelect?: (item: AssetSelection) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null);
   // Hidden dismiss trigger so a picked file closes the modal via the SAME
   // Base UI Close path the grid cards use (we can't click the visible tile
   // to close because the file dialog resolves asynchronously in `onChange`).
-  const closeRef = useRef<HTMLButtonElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
     if (file != null) {
-      onSelect?.({ name: file.name, type: file.type || 'Upload', src: URL.createObjectURL(file) })
-      closeRef.current?.click()
+      onSelect?.({ name: file.name, type: file.type || "Upload", src: URL.createObjectURL(file) });
+      closeRef.current?.click();
     }
     // Reset so picking the same file again still fires `onChange`.
-    event.target.value = ''
-  }
+    event.target.value = "";
+  };
 
   return (
     <>
@@ -137,22 +141,28 @@ function NewElementCard({ onSelect }: { onSelect?: (item: AssetSelection) => voi
       />
       <Modal.Close ref={closeRef} aria-hidden tabIndex={-1} className="hidden" />
     </>
-  )
+  );
 }
 
-function ElementCard({ name, type, src, badge, badgeColor, onSelect }: ElementItem & { onSelect?: (item: AssetSelection) => void }) {
-  const className = 'flex flex-col gap-1.5 rounded-q-400 p-1 text-left transition-colors hover:bg-q-transparent-light-05'
+function ElementCard({
+  name,
+  type,
+  src,
+  badge,
+  badgeColor,
+  onSelect,
+}: ElementItem & { onSelect?: (item: AssetSelection) => void }) {
+  const className =
+    "flex flex-col gap-1.5 rounded-q-400 p-1 text-left transition-colors hover:bg-q-transparent-light-05";
   const children = (
     <>
       <Media ratio="auto" rounded="md" className="h-24 w-full">
         <Media.Image src={src} alt={name} />
-        {badge != null
-          ? (
-              <span className="absolute bottom-1.5 left-1.5 z-10">
-                <Avatar size="xxs" color={badgeColor} alt={badge} />
-              </span>
-            )
-          : null}
+        {badge != null ? (
+          <span className="absolute bottom-1.5 left-1.5 z-10">
+            <Avatar size="xxs" color={badgeColor} alt={badge} />
+          </span>
+        ) : null}
       </Media>
       <div className="flex flex-col gap-0.5 px-1 py-0.5">
         <Typography as="span" variant="caption-sm-semi-bold" color="primary" truncate>
@@ -163,21 +173,19 @@ function ElementCard({ name, type, src, badge, badgeColor, onSelect }: ElementIt
         </Typography>
       </div>
     </>
-  )
+  );
 
   // With an `onSelect`, picking a card closes the modal and reports the choice;
   // without one it stays a passive tile (the original gallery behaviour).
-  return onSelect != null
-    ? (
-        <Modal.Close className={className} onClick={() => onSelect({ name, type, src })}>
-          {children}
-        </Modal.Close>
-      )
-    : (
-        <button type="button" className={className}>
-          {children}
-        </button>
-      )
+  return onSelect != null ? (
+    <Modal.Close className={className} onClick={() => onSelect({ name, type, src })}>
+      {children}
+    </Modal.Close>
+  ) : (
+    <button type="button" className={className}>
+      {children}
+    </button>
+  );
 }
 
 function AssetGrid({ onSelect }: { onSelect?: (item: AssetSelection) => void }) {
@@ -190,23 +198,23 @@ function AssetGrid({ onSelect }: { onSelect?: (item: AssetSelection) => void }) 
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 /* ── Modal ──────────────────────────────────────────────────────────────────── */
 
 /** A picked library element, reported by `AssetLibraryModal.onSelect`. */
 export interface AssetSelection {
-  name: string
-  type: string
-  src: string
+  name: string;
+  type: string;
+  src: string;
 }
 
 export interface AssetLibraryModalProps {
   /** The trigger element (e.g. a Composer.Action). Rendered as the Modal trigger. */
-  trigger: ReactElement
+  trigger: ReactElement;
   /** Fired with the chosen element when a grid card is picked (closes the modal). */
-  onSelect?: (item: AssetSelection) => void
+  onSelect?: (item: AssetSelection) => void;
 }
 
 export function AssetLibraryModal({ trigger, onSelect }: AssetLibraryModalProps) {
@@ -227,5 +235,5 @@ export function AssetLibraryModal({ trigger, onSelect }: AssetLibraryModalProps)
         </div>
       </Modal.Content>
     </Modal.Root>
-  )
+  );
 }

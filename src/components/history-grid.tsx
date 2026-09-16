@@ -1,4 +1,4 @@
-import { JustifiedGallery } from '@/components/gallery'
+import { JustifiedGallery } from "@/components/gallery";
 
 /**
  * History feed — THE canonical History section for every app: it shows only the
@@ -19,5 +19,5 @@ import { JustifiedGallery } from '@/components/gallery'
  * `src/layouts/preset.tsx` picks up the gallery automatically.
  */
 export function HistoryGrid() {
-  return <JustifiedGallery />
+  return <JustifiedGallery />;
 }

@@ -15,9 +15,7 @@ interface BoothSession {
 
 const session: BoothSession = { photos: [], strip: null };
 
-export function setSessionPhotos(
-  photos: Array<ImageBitmap | HTMLImageElement>,
-) {
+export function setSessionPhotos(photos: Array<ImageBitmap | HTMLImageElement>) {
   session.photos = photos;
 }
 

@@ -1,38 +1,38 @@
-import type { ReactNode } from 'react'
-import { useEffect, useRef, useState } from 'react'
-import IconAccessibilityNew from '@material-symbols/svg-400/outlined/accessibility_new.svg?react'
-import IconApparel from '@material-symbols/svg-400/outlined/apparel.svg?react'
-import IconAspectRatio from '@material-symbols/svg-400/outlined/aspect_ratio.svg?react'
-import IconCheckroom from '@material-symbols/svg-400/outlined/checkroom.svg?react'
-import IconFolder from '@material-symbols/svg-400/outlined/folder.svg?react'
-import IconNewspaper from '@material-symbols/svg-400/outlined/newspaper.svg?react'
-import IconPencil from '@material-symbols/svg-400/outlined/edit.svg?react'
-import IconPerson from '@material-symbols/svg-400/outlined/person.svg?react'
-import IconSearch from '@material-symbols/svg-400/outlined/search.svg?react'
-import IconStyler from '@material-symbols/svg-400/outlined/styler.svg?react'
-import IconWallpaper from '@material-symbols/svg-400/outlined/wallpaper.svg?react'
-import Sparkles from '@/assets/icon-sparkles-soft.svg?react'
-import { Accordion } from '@higgsfield/quanta/accordion'
-import { Button } from '@higgsfield/quanta/button'
-import { Card, card } from '@higgsfield/quanta/card'
-import { Grid } from '@higgsfield/quanta/grid'
-import { Icon } from '@higgsfield/quanta/icon'
-import { Input } from '@higgsfield/quanta/input'
-import { Loader } from '@higgsfield/quanta/loader'
-import { Select } from '@higgsfield/quanta/select'
-import { Tabs } from '@higgsfield/quanta/tabs'
-import { Typography } from '@higgsfield/quanta/typography'
-import { AssetLibraryModal } from '@/components/asset-library'
-import type { AssetSelection } from '@/components/asset-library'
-import { GenerationCard } from '@/components/generation-card'
-import { GenerationDetailModal } from '@/components/generation-detail'
-import { HistoryGrid } from '@/components/history-grid'
-import { MediaCard } from '@/components/media-card'
-import { RailFooter } from '@/components/rail-footer'
-import { SettingTrigger } from '@/components/setting-trigger'
-import { TemplateModal } from '@/components/template-modal'
-import type { TemplateOption } from '@/components/template-modal'
-import { UploadField } from '@/components/upload-field'
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import IconAccessibilityNew from "@material-symbols/svg-400/outlined/accessibility_new.svg?react";
+import IconApparel from "@material-symbols/svg-400/outlined/apparel.svg?react";
+import IconAspectRatio from "@material-symbols/svg-400/outlined/aspect_ratio.svg?react";
+import IconCheckroom from "@material-symbols/svg-400/outlined/checkroom.svg?react";
+import IconFolder from "@material-symbols/svg-400/outlined/folder.svg?react";
+import IconNewspaper from "@material-symbols/svg-400/outlined/newspaper.svg?react";
+import IconPencil from "@material-symbols/svg-400/outlined/edit.svg?react";
+import IconPerson from "@material-symbols/svg-400/outlined/person.svg?react";
+import IconSearch from "@material-symbols/svg-400/outlined/search.svg?react";
+import IconStyler from "@material-symbols/svg-400/outlined/styler.svg?react";
+import IconWallpaper from "@material-symbols/svg-400/outlined/wallpaper.svg?react";
+import Sparkles from "@/assets/icon-sparkles-soft.svg?react";
+import { Accordion } from "@higgsfield/quanta/accordion";
+import { Button } from "@higgsfield/quanta/button";
+import { Card, card } from "@higgsfield/quanta/card";
+import { Grid } from "@higgsfield/quanta/grid";
+import { Icon } from "@higgsfield/quanta/icon";
+import { Input } from "@higgsfield/quanta/input";
+import { Loader } from "@higgsfield/quanta/loader";
+import { Select } from "@higgsfield/quanta/select";
+import { Tabs } from "@higgsfield/quanta/tabs";
+import { Typography } from "@higgsfield/quanta/typography";
+import { AssetLibraryModal } from "@/components/asset-library";
+import type { AssetSelection } from "@/components/asset-library";
+import { GenerationCard } from "@/components/generation-card";
+import { GenerationDetailModal } from "@/components/generation-detail";
+import { HistoryGrid } from "@/components/history-grid";
+import { MediaCard } from "@/components/media-card";
+import { RailFooter } from "@/components/rail-footer";
+import { SettingTrigger } from "@/components/setting-trigger";
+import { TemplateModal } from "@/components/template-modal";
+import type { TemplateOption } from "@/components/template-modal";
+import { UploadField } from "@/components/upload-field";
 
 /**
  * AI Stylist app screen template — a rebuild of the live Higgsfield "AI Stylist"
@@ -61,90 +61,98 @@ import { UploadField } from '@/components/upload-field'
 
 /** Preview covers reused across the outfit gallery, presets picker and results. */
 const COVERS = [
-  '/presets/cover.png',
-  '/presets/explain.png',
-  '/presets/hyper-motion.png',
-  '/presets/how-product-works.png',
-] as const
+  "/presets/cover.png",
+  "/presets/explain.png",
+  "/presets/hyper-motion.png",
+  "/presets/how-product-works.png",
+] as const;
 
 /** Outfit presets — the "mix and match from presets" gallery + cover picker. */
 const OUTFITS: TemplateOption[] = [
-  { id: 'old-money', label: 'Old Money', image: COVERS[0] },
-  { id: 'streetwear', label: 'Streetwear', image: COVERS[1] },
-  { id: 'evening-gown', label: 'Evening Gown', image: COVERS[2] },
-  { id: 'business', label: 'Business Casual', image: COVERS[3] },
-  { id: 'summer-linen', label: 'Summer Linen', image: COVERS[1] },
-  { id: 'denim', label: 'Denim on Denim', image: COVERS[0] },
-  { id: 'athleisure', label: 'Athleisure', image: COVERS[2] },
-  { id: 'boho', label: 'Boho Chic', image: COVERS[3] },
-  { id: 'leather', label: 'Leather Jacket', image: COVERS[1] },
-  { id: 'trench', label: 'Trench Coat', image: COVERS[0] },
-  { id: 'cocktail', label: 'Cocktail Dress', image: COVERS[2] },
-  { id: 'techwear', label: 'Techwear', image: COVERS[3] },
-]
+  { id: "old-money", label: "Old Money", image: COVERS[0] },
+  { id: "streetwear", label: "Streetwear", image: COVERS[1] },
+  { id: "evening-gown", label: "Evening Gown", image: COVERS[2] },
+  { id: "business", label: "Business Casual", image: COVERS[3] },
+  { id: "summer-linen", label: "Summer Linen", image: COVERS[1] },
+  { id: "denim", label: "Denim on Denim", image: COVERS[0] },
+  { id: "athleisure", label: "Athleisure", image: COVERS[2] },
+  { id: "boho", label: "Boho Chic", image: COVERS[3] },
+  { id: "leather", label: "Leather Jacket", image: COVERS[1] },
+  { id: "trench", label: "Trench Coat", image: COVERS[0] },
+  { id: "cocktail", label: "Cocktail Dress", image: COVERS[2] },
+  { id: "techwear", label: "Techwear", image: COVERS[3] },
+];
 
 /** The default cover shown before an outfit is picked. */
-const DEFAULT_OUTFIT: TemplateOption = { id: 'old-money', label: 'Old Money', image: COVERS[0] }
+const DEFAULT_OUTFIT: TemplateOption = { id: "old-money", label: "Old Money", image: COVERS[0] };
 
-const POSES = ['Natural', 'Full body', 'Walking', 'Seated', 'Three-quarter', 'Profile']
+const POSES = ["Natural", "Full body", "Walking", "Seated", "Three-quarter", "Profile"];
 
 const BACKGROUNDS = [
-  { value: 'studio', title: 'Studio', subtitle: 'Clean seamless backdrop' },
-  { value: 'street', title: 'City street', subtitle: 'Editorial street style' },
-  { value: 'runway', title: 'Runway', subtitle: 'Catwalk lighting' },
-  { value: 'beach', title: 'Beach', subtitle: 'Golden-hour coastline' },
-  { value: 'cafe', title: 'Café', subtitle: 'Warm interior' },
-  { value: 'keep', title: 'Keep original', subtitle: 'Use your photo\u2019s background' },
-]
+  { value: "studio", title: "Studio", subtitle: "Clean seamless backdrop" },
+  { value: "street", title: "City street", subtitle: "Editorial street style" },
+  { value: "runway", title: "Runway", subtitle: "Catwalk lighting" },
+  { value: "beach", title: "Beach", subtitle: "Golden-hour coastline" },
+  { value: "cafe", title: "Café", subtitle: "Warm interior" },
+  { value: "keep", title: "Keep original", subtitle: "Use your photo\u2019s background" },
+];
 
 const RATIOS = [
-  { value: '3:4', title: '3:4', subtitle: 'Portrait' },
-  { value: '1:1', title: '1:1', subtitle: 'Square' },
-  { value: '9:16', title: '9:16', subtitle: 'Story' },
-]
+  { value: "3:4", title: "3:4", subtitle: "Portrait" },
+  { value: "1:1", title: "1:1", subtitle: "Square" },
+  { value: "9:16", title: "9:16", subtitle: "Story" },
+];
 
 /** The styled looks revealed once a (simulated) generation finishes. */
 const RESULT_LOOKS = [
   {
     src: COVERS[0],
-    prompt: 'Full-body editorial portrait of the subject in a tailored old-money ensemble, soft studio light, 3:4 fashion photography.',
+    prompt:
+      "Full-body editorial portrait of the subject in a tailored old-money ensemble, soft studio light, 3:4 fashion photography.",
   },
   {
     src: COVERS[2],
-    prompt: 'The same subject styled in a flowing evening gown, three-quarter pose against a runway backdrop, dramatic rim light.',
+    prompt:
+      "The same subject styled in a flowing evening gown, three-quarter pose against a runway backdrop, dramatic rim light.",
   },
   {
     src: COVERS[1],
-    prompt: 'Street-style look with layered outerwear, natural walking pose on a city street, overcast daylight.',
+    prompt:
+      "Street-style look with layered outerwear, natural walking pose on a city street, overcast daylight.",
   },
   {
     src: COVERS[3],
-    prompt: 'Business-casual outfit, seated pose in a warm café interior, shallow depth of field.',
+    prompt: "Business-casual outfit, seated pose in a warm café interior, shallow depth of field.",
   },
-]
+];
 
 /** Right-pane generation lifecycle for the Results canvas. */
-type Stage = 'idle' | 'generating' | 'result'
+type Stage = "idle" | "generating" | "result";
 
 /** Shared popup placement for the rail pickers — opens into the workspace. */
 const PICKER_POPUP = {
-  size: 'picker',
-  surface: 'solid',
-  side: 'right',
-  align: 'start',
+  size: "picker",
+  surface: "solid",
+  side: "right",
+  align: "start",
   sideOffset: 8,
   collisionPadding: 16,
-} satisfies Partial<Parameters<typeof Select.Content>[0]>
+} satisfies Partial<Parameters<typeof Select.Content>[0]>;
 
 /** Pose picker — single-line options behind the Pose setting row. */
 function PoseSelect() {
   return (
     <Select.Root defaultValue="Natural">
-      <Select.Trigger bare render={<SettingTrigger label="Pose" start={<Icon size="sm" as={IconAccessibilityNew} />} />}>
+      <Select.Trigger
+        bare
+        render={
+          <SettingTrigger label="Pose" start={<Icon size="sm" as={IconAccessibilityNew} />} />
+        }
+      >
         <Select.Value placeholder="Select pose" />
       </Select.Trigger>
       <Select.Content {...PICKER_POPUP}>
-        {POSES.map(pose => (
+        {POSES.map((pose) => (
           <Select.Item key={pose} value={pose}>
             <Select.ItemText>{pose}</Select.ItemText>
             <Select.ItemIndicator />
@@ -152,20 +160,23 @@ function PoseSelect() {
         ))}
       </Select.Content>
     </Select.Root>
-  )
+  );
 }
 
 /** Background picker — two-line options (title + description). */
 function BackgroundSelect() {
   return (
     <Select.Root defaultValue="studio">
-      <Select.Trigger bare render={<SettingTrigger label="Background" start={<Icon size="sm" as={IconWallpaper} />} />}>
+      <Select.Trigger
+        bare
+        render={<SettingTrigger label="Background" start={<Icon size="sm" as={IconWallpaper} />} />}
+      >
         <Select.Value placeholder="Select background">
-          {(value: string) => BACKGROUNDS.find(b => b.value === value)?.title ?? value}
+          {(value: string) => BACKGROUNDS.find((b) => b.value === value)?.title ?? value}
         </Select.Value>
       </Select.Trigger>
       <Select.Content {...PICKER_POPUP}>
-        {BACKGROUNDS.map(background => (
+        {BACKGROUNDS.map((background) => (
           <Select.Item key={background.value} value={background.value}>
             <Select.ItemContent>
               <Select.ItemText>{background.title}</Select.ItemText>
@@ -176,18 +187,23 @@ function BackgroundSelect() {
         ))}
       </Select.Content>
     </Select.Root>
-  )
+  );
 }
 
 /** Aspect-ratio picker — two-line options (3:4 Portrait / 1:1 Square / 9:16 Story). */
 function AspectRatioSelect() {
   return (
     <Select.Root defaultValue="3:4">
-      <Select.Trigger bare render={<SettingTrigger label="Aspect Ratio" start={<Icon size="sm" as={IconAspectRatio} />} />}>
+      <Select.Trigger
+        bare
+        render={
+          <SettingTrigger label="Aspect Ratio" start={<Icon size="sm" as={IconAspectRatio} />} />
+        }
+      >
         <Select.Value placeholder="Select ratio" />
       </Select.Trigger>
       <Select.Content {...PICKER_POPUP}>
-        {RATIOS.map(ratio => (
+        {RATIOS.map((ratio) => (
           <Select.Item key={ratio.value} value={ratio.value}>
             <Select.ItemContent>
               <Select.ItemText>{ratio.title}</Select.ItemText>
@@ -198,14 +214,14 @@ function AspectRatioSelect() {
         ))}
       </Select.Content>
     </Select.Root>
-  )
+  );
 }
 
 interface StylistRailProps {
-  outfit: TemplateOption
-  onOutfitChange: (outfit: TemplateOption) => void
-  busy: boolean
-  onGenerate: () => void
+  outfit: TemplateOption;
+  onOutfitChange: (outfit: TemplateOption) => void;
+  busy: boolean;
+  onGenerate: () => void;
 }
 
 /**
@@ -218,18 +234,18 @@ interface StylistRailProps {
  */
 function StylistRail({ outfit, onOutfitChange, busy, onGenerate }: StylistRailProps) {
   // Your photo — the subject to restyle (picked from the shared AssetLibraryModal).
-  const [photo, setPhoto] = useState<AssetSelection | null>(null)
+  const [photo, setPhoto] = useState<AssetSelection | null>(null);
   // Your own clothes — the optional "upload your own garment" input.
-  const [garment, setGarment] = useState<AssetSelection | null>(null)
+  const [garment, setGarment] = useState<AssetSelection | null>(null);
 
   return (
     <aside
       className={card(
-        { surface: 'solid', elevation: 'raised' },
+        { surface: "solid", elevation: "raised" },
         // Figma input rail width: 342px = spacing scale × 85.5. Stretch to the
         // viewport height and scroll internally so the sticky RailFooter can pin
         // the Generate CTA when the chosen fields overflow.
-        'w-85.5 shrink-0 gap-3 overflow-y-auto border-q-thin border-q-border-subtle p-3',
+        "w-85.5 shrink-0 gap-3 overflow-y-auto border-q-thin border-q-border-subtle p-3",
       )}
     >
       <div className="flex flex-col gap-1 px-2 py-0.5">
@@ -242,27 +258,21 @@ function StylistRail({ outfit, onOutfitChange, busy, onGenerate }: StylistRailPr
       </div>
 
       {/* PRIMARY input — your photo, always visible (the subject to restyle). */}
-      {photo == null
-        ? (
-            <AssetLibraryModal
-              onSelect={setPhoto}
-              trigger={(
-                <UploadField
-                  render={<button type="button" />}
-                  icon={IconPerson}
-                  title="Upload your photo"
-                  subtitle="A clear portrait or full-body shot"
-                />
-              )}
-            />
-          )
-        : (
+      {photo == null ? (
+        <AssetLibraryModal
+          onSelect={setPhoto}
+          trigger={
             <UploadField
-              preview={photo.src}
-              previewAlt={photo.name}
-              onRemove={() => setPhoto(null)}
+              render={<button type="button" />}
+              icon={IconPerson}
+              title="Upload your photo"
+              subtitle="A clear portrait or full-body shot"
             />
-          )}
+          }
+        />
+      ) : (
+        <UploadField preview={photo.src} previewAlt={photo.name} onRemove={() => setPhoto(null)} />
+      )}
 
       {/* Secondary choices — collapsed by default, one open at a time. */}
       <Accordion.Root variant="separated" size="sm">
@@ -277,7 +287,7 @@ function StylistRail({ outfit, onOutfitChange, busy, onGenerate }: StylistRailPr
               options={OUTFITS}
               value={outfit.id}
               onSelect={onOutfitChange}
-              trigger={(
+              trigger={
                 <MediaCard
                   render={<button type="button" />}
                   ratio="auto"
@@ -288,37 +298,35 @@ function StylistRail({ outfit, onOutfitChange, busy, onGenerate }: StylistRailPr
                   src={outfit.image}
                   alt={`${outfit.label} outfit`}
                   title={outfit.label}
-                  action={(
+                  action={
                     <span className="q-media-card-action">
                       Change
                       <Icon size="sm" as={IconPencil} />
                     </span>
-                  )}
+                  }
                 />
-              )}
+              }
             />
-            {garment == null
-              ? (
-                  <AssetLibraryModal
-                    onSelect={setGarment}
-                    trigger={(
-                      <UploadField
-                        render={<button type="button" />}
-                        border="solid"
-                        icon={IconApparel}
-                        title="Or upload your own clothes"
-                        subtitle="PNG or JPG of a garment, up to 20MB"
-                      />
-                    )}
-                  />
-                )
-              : (
+            {garment == null ? (
+              <AssetLibraryModal
+                onSelect={setGarment}
+                trigger={
                   <UploadField
-                    preview={garment.src}
-                    previewAlt={garment.name}
-                    onRemove={() => setGarment(null)}
+                    render={<button type="button" />}
+                    border="solid"
+                    icon={IconApparel}
+                    title="Or upload your own clothes"
+                    subtitle="PNG or JPG of a garment, up to 20MB"
                   />
-                )}
+                }
+              />
+            ) : (
+              <UploadField
+                preview={garment.src}
+                previewAlt={garment.name}
+                onRemove={() => setGarment(null)}
+              />
+            )}
           </Accordion.Panel>
         </Accordion.Item>
 
@@ -359,26 +367,24 @@ function StylistRail({ outfit, onOutfitChange, busy, onGenerate }: StylistRailPr
           onClick={onGenerate}
           start={busy ? <Loader size="xs" color="neutral" /> : undefined}
           end={
-            busy
-              ? undefined
-              : (
-                  <span className="flex items-center gap-2">
-                    <Sparkles width={14} height={14} />
-                    <span className="text-q-body-md-semi-bold">8</span>
-                  </span>
-                )
+            busy ? undefined : (
+              <span className="flex items-center gap-2">
+                <Sparkles width={14} height={14} />
+                <span className="text-q-body-md-semi-bold">8</span>
+              </span>
+            )
           }
         >
-          {busy ? 'Styling\u2026' : 'Generate'}
+          {busy ? "Styling\u2026" : "Generate"}
         </Button>
       </RailFooter>
     </aside>
-  )
+  );
 }
 
 interface OutfitGalleryProps {
-  selectedId: string
-  onSelect: (outfit: TemplateOption) => void
+  selectedId: string;
+  onSelect: (outfit: TemplateOption) => void;
 }
 
 /** The outfit-preset gallery — portrait tiles, click to select (mix and match). */
@@ -386,7 +392,7 @@ function OutfitGallery({ selectedId, onSelect }: OutfitGalleryProps) {
   return (
     <Card surface="solid" className="min-h-0 flex-1 overflow-y-auto p-4">
       <Grid cols={4} gap={4}>
-        {OUTFITS.map(outfit => (
+        {OUTFITS.map((outfit) => (
           <MediaCard
             key={outfit.id}
             render={<button type="button" />}
@@ -403,14 +409,17 @@ function OutfitGallery({ selectedId, onSelect }: OutfitGalleryProps) {
         ))}
       </Grid>
     </Card>
-  )
+  );
 }
 
 /** The Results canvas — idle empty state → generating → styled result grid. */
-function ResultsPanel({ stage, outfit }: { stage: Stage, outfit: TemplateOption }) {
-  if (stage === 'idle') {
+function ResultsPanel({ stage, outfit }: { stage: Stage; outfit: TemplateOption }) {
+  if (stage === "idle") {
     return (
-      <Card surface="solid" className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+      <Card
+        surface="solid"
+        className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-6 text-center"
+      >
         <span className="flex items-center justify-center rounded-q-full bg-q-transparent-light-05 p-4">
           <Icon as={IconStyler} size="lg" color="secondary" />
         </span>
@@ -419,18 +428,18 @@ function ResultsPanel({ stage, outfit }: { stage: Stage, outfit: TemplateOption 
             Your styled looks will appear here
           </Typography>
           <Typography as="p" variant="body-sm-regular" color="secondary">
-            Upload your photo, pick an outfit, then press Generate to try on a
-            complete look instantly.
+            Upload your photo, pick an outfit, then press Generate to try on a complete look
+            instantly.
           </Typography>
         </div>
       </Card>
-    )
+    );
   }
 
   return (
     <Card surface="solid" className="min-h-0 flex-1 overflow-y-auto p-4">
       <Grid cols="auto-fit" minColWidth="14rem" gap={4}>
-        {stage === 'generating'
+        {stage === "generating"
           ? RESULT_LOOKS.map((_, index) => (
               <GenerationCard key={index} state="generating" ratio={3 / 4} />
             ))
@@ -439,13 +448,13 @@ function ResultsPanel({ stage, outfit }: { stage: Stage, outfit: TemplateOption 
                 key={index}
                 generation={{
                   src: look.src,
-                  mediaType: 'image',
+                  mediaType: "image",
                   aspectRatio: 3 / 4,
                   prompt: look.prompt,
-                  fileType: 'JPG',
-                  author: { name: 'AI Stylist', role: 'Generated look' },
+                  fileType: "JPG",
+                  author: { name: "AI Stylist", role: "Generated look" },
                 }}
-                trigger={(
+                trigger={
                   <GenerationCard
                     render={<button type="button" />}
                     ratio={3 / 4}
@@ -453,19 +462,19 @@ function ResultsPanel({ stage, outfit }: { stage: Stage, outfit: TemplateOption 
                     alt={`${outfit.label} styled look ${index + 1}`}
                     className="group cursor-pointer"
                   />
-                )}
+                }
               />
             ))}
       </Grid>
     </Card>
-  )
+  );
 }
 
 /** "How it works in 3 steps" explainer — the fourth tab's panel content. */
-const STEPS: { title: string, description: string, preview: ReactNode }[] = [
+const STEPS: { title: string; description: string; preview: ReactNode }[] = [
   {
-    title: 'Upload your photo',
-    description: 'Add a clear portrait or full-body shot — this is the person we\u2019ll restyle.',
+    title: "Upload your photo",
+    description: "Add a clear portrait or full-body shot — this is the person we\u2019ll restyle.",
     preview: (
       <div className="flex h-full flex-col items-center justify-center gap-3 rounded-q-300 border border-dashed border-q-border-subtle px-8">
         <Icon as={IconPerson} size="md" color="secondary" />
@@ -481,8 +490,8 @@ const STEPS: { title: string, description: string, preview: ReactNode }[] = [
     ),
   },
   {
-    title: 'Pick or upload an outfit',
-    description: 'Mix and match from the outfit presets, or upload your own clothes to try on.',
+    title: "Pick or upload an outfit",
+    description: "Mix and match from the outfit presets, or upload your own clothes to try on.",
     preview: (
       <div className="flex h-full items-center justify-center gap-3 p-6">
         <Icon as={IconCheckroom} size="md" color="secondary" />
@@ -491,8 +500,8 @@ const STEPS: { title: string, description: string, preview: ReactNode }[] = [
     ),
   },
   {
-    title: 'Generate your look',
-    description: 'Set the pose and background, then press Generate to try on the complete outfit.',
+    title: "Generate your look",
+    description: "Set the pose and background, then press Generate to try on the complete outfit.",
     preview: (
       <div className="flex h-full items-center justify-center">
         <Button variant="marketingPrimary" size="lg" end={<Sparkles width={14} height={14} />}>
@@ -501,7 +510,7 @@ const STEPS: { title: string, description: string, preview: ReactNode }[] = [
       </div>
     ),
   },
-]
+];
 
 function HowItWorks() {
   return (
@@ -509,9 +518,7 @@ function HowItWorks() {
       <section className="flex flex-col gap-8">
         <header className="flex items-center justify-between gap-4">
           <Typography as="h2" variant="accent-lg-bold" color="primary" className="uppercase">
-            How it works
-            {' '}
-            <span className="text-q-text-brand">in 3 steps</span>
+            How it works <span className="text-q-text-brand">in 3 steps</span>
           </Typography>
         </header>
 
@@ -534,17 +541,17 @@ function HowItWorks() {
         </div>
       </section>
     </Card>
-  )
+  );
 }
 
-type WorkspaceTab = 'outfits' | 'results' | 'history' | 'how-it-works'
+type WorkspaceTab = "outfits" | "results" | "history" | "how-it-works";
 
 interface StylistGalleryProps {
-  tab: WorkspaceTab
-  onTabChange: (tab: WorkspaceTab) => void
-  stage: Stage
-  outfit: TemplateOption
-  onOutfitSelect: (outfit: TemplateOption) => void
+  tab: WorkspaceTab;
+  onTabChange: (tab: WorkspaceTab) => void;
+  stage: Stage;
+  outfit: TemplateOption;
+  onOutfitSelect: (outfit: TemplateOption) => void;
 }
 
 /** Right column — segmented tabs + search over the workspace panels. */
@@ -556,16 +563,20 @@ function StylistGallery({ tab, onTabChange, stage, outfit, onOutfitSelect }: Sty
       <Tabs.Root
         variant="segmented"
         value={tab}
-        onValueChange={value => onTabChange(value as WorkspaceTab)}
+        onValueChange={(value) => onTabChange(value as WorkspaceTab)}
         className="flex! min-h-0 flex-1 flex-col gap-3"
       >
         <header className="flex shrink-0 items-center justify-between gap-4">
           <Tabs.List
             items={[
-              { value: 'outfits', label: 'Outfits', start: <Icon size="sm" as={IconCheckroom} /> },
-              { value: 'results', label: 'Results', start: <Icon size="sm" as={IconStyler} /> },
-              { value: 'history', label: 'History', start: <Icon size="sm" as={IconFolder} /> },
-              { value: 'how-it-works', label: 'How it works', start: <Icon size="sm" as={IconNewspaper} /> },
+              { value: "outfits", label: "Outfits", start: <Icon size="sm" as={IconCheckroom} /> },
+              { value: "results", label: "Results", start: <Icon size="sm" as={IconStyler} /> },
+              { value: "history", label: "History", start: <Icon size="sm" as={IconFolder} /> },
+              {
+                value: "how-it-works",
+                label: "How it works",
+                start: <Icon size="sm" as={IconNewspaper} />,
+              },
             ]}
           />
           <Input
@@ -592,34 +603,35 @@ function StylistGallery({ tab, onTabChange, stage, outfit, onOutfitSelect }: Sty
         </Tabs.Panel>
       </Tabs.Root>
     </section>
-  )
+  );
 }
 
 export function AiStylistTemplate() {
-  const [outfit, setOutfit] = useState<TemplateOption>(DEFAULT_OUTFIT)
-  const [tab, setTab] = useState<WorkspaceTab>('outfits')
-  const [stage, setStage] = useState<Stage>('idle')
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [outfit, setOutfit] = useState<TemplateOption>(DEFAULT_OUTFIT);
+  const [tab, setTab] = useState<WorkspaceTab>("outfits");
+  const [stage, setStage] = useState<Stage>("idle");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => {
-    if (timerRef.current != null)
-      clearTimeout(timerRef.current)
-  }, [])
+  useEffect(
+    () => () => {
+      if (timerRef.current != null) clearTimeout(timerRef.current);
+    },
+    [],
+  );
 
   const handleGenerate = () => {
-    if (timerRef.current != null)
-      clearTimeout(timerRef.current)
-    setStage('generating')
-    setTab('results')
-    timerRef.current = setTimeout(() => setStage('result'), 2200)
-  }
+    if (timerRef.current != null) clearTimeout(timerRef.current);
+    setStage("generating");
+    setTab("results");
+    timerRef.current = setTimeout(() => setStage("result"), 2200);
+  };
 
   return (
     <div className="flex h-dvh gap-5 overflow-hidden bg-q-background-primary px-4 py-3">
       <StylistRail
         outfit={outfit}
         onOutfitChange={setOutfit}
-        busy={stage === 'generating'}
+        busy={stage === "generating"}
         onGenerate={handleGenerate}
       />
       <StylistGallery
@@ -630,5 +642,5 @@ export function AiStylistTemplate() {
         onOutfitSelect={setOutfit}
       />
     </div>
-  )
+  );
 }

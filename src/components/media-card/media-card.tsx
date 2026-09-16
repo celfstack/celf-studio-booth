@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import type { ComponentPropsWithRef, ReactElement, ReactNode, Ref } from 'react'
-import { useRender } from '@base-ui/react/use-render'
-import { Media } from '@higgsfield/quanta/media'
-import { Typography } from '@higgsfield/quanta/typography'
-import { cn as cx } from '@/lib/utils'
+import type { ComponentPropsWithRef, ReactElement, ReactNode, Ref } from "react";
+import { useRender } from "@base-ui/react/use-render";
+import { Media } from "@higgsfield/quanta/media";
+import { Typography } from "@higgsfield/quanta/typography";
+import { cn as cx } from "@/lib/utils";
 
 /**
  * MediaCard — a framed media tile for preset galleries and cover pickers
@@ -34,61 +34,61 @@ import { cn as cx } from '@/lib/utils'
  * the frame (badges, progress) — both keep the card fully composition-first.
  */
 
-export type MediaCardFrame = 'none' | 'thin' | 'thick'
-export type MediaCardTitleVariant = 'body' | 'accent'
+export type MediaCardFrame = "none" | "thin" | "thick";
+export type MediaCardTitleVariant = "body" | "accent";
 
 const FRAME_CLASS = {
-  none: '',
-  thin: 'q-media-card-frame-thin',
-  thick: 'q-media-card-frame-thick',
-} satisfies Record<MediaCardFrame, string>
+  none: "",
+  thin: "q-media-card-frame-thin",
+  thick: "q-media-card-frame-thick",
+} satisfies Record<MediaCardFrame, string>;
 
 /** Caption modifier per title variant — `accent` covers get p-16 + uppercase. */
 const TITLE_VARIANT_CLASS = {
-  body: '',
-  accent: 'q-media-card-caption-accent',
-} satisfies Record<MediaCardTitleVariant, string>
+  body: "",
+  accent: "q-media-card-caption-accent",
+} satisfies Record<MediaCardTitleVariant, string>;
 
-export type MediaCardProps = Omit<ComponentPropsWithRef<'div'>, 'title'> & {
+export type MediaCardProps = Omit<ComponentPropsWithRef<"div">, "title"> & {
   /** Image source for the default `Media.Image`. Ignored when `media` is set. */
-  src?: string
+  src?: string;
   /** Alt text for the default image. */
-  alt?: string
+  alt?: string;
   /** Aspect ratio, forwarded to `Media` (default `video` — the gallery tile). */
-  ratio?: ComponentPropsWithRef<typeof Media>['ratio']
+  ratio?: ComponentPropsWithRef<typeof Media>["ratio"];
   /** Custom media node (a `Media.Video`, a fallback…) instead of the image. */
-  media?: ReactNode
+  media?: ReactNode;
   /** Bottom title. Any node. */
-  title?: ReactNode
+  title?: ReactNode;
   /** Title style: gallery `body` (default) or uppercase `accent` cover. */
-  titleVariant?: MediaCardTitleVariant
+  titleVariant?: MediaCardTitleVariant;
   /** Dark gradient behind the title (default true; covers pass false). */
-  scrim?: boolean
+  scrim?: boolean;
   /** Border weight: `thick` gallery tile (default), `thin` cover, or `none` (frameless). */
-  frame?: MediaCardFrame
+  frame?: MediaCardFrame;
   /**
    * Mark the tile as the active choice — draws the lime brand ring
    * (`ring-q-brand-primary`). Pair with `aria-pressed` on a `<button>` host for
    * an accessible single-select gallery. Best with `frame="none"`.
    */
-  selected?: boolean
+  selected?: boolean;
   /** Top-right slot — e.g. `MediaCard.Action`. Only on passive (div) cards. */
-  action?: ReactNode
+  action?: ReactNode;
   /** Extra overlay content composed inside the frame. */
-  children?: ReactNode
+  children?: ReactNode;
   /** Swap the host element — `<button>`/`<a>`/`<Link>` for clickable tiles. */
-  render?: ReactElement
-}
+  render?: ReactElement;
+};
 
 function Root({
   src,
-  alt = '',
-  ratio = 'video',
+  alt = "",
+  ratio = "video",
   media,
   title,
-  titleVariant = 'body',
+  titleVariant = "body",
   scrim = true,
-  frame = 'thick',
+  frame = "thick",
   selected = false,
   action,
   children,
@@ -102,50 +102,48 @@ function Root({
       <Media ratio={ratio} rounded="none" className="q-media-card-media">
         {media ?? (src != null ? <Media.Image src={src} alt={alt} /> : <Media.Fallback />)}
       </Media>
-      {title != null
-        ? (
-            <Media.Overlay
-              placement="bottom"
-              className={cx(
-                'q-media-card-caption',
-                !scrim && 'q-media-card-caption-bare',
-                TITLE_VARIANT_CLASS[titleVariant],
-              )}
-            >
-              <Typography
-                as="span"
-                variant={titleVariant === 'accent' ? 'accent-xs-bold' : 'body-lg-semi-bold'}
-                color="primary"
-                className="q-media-card-title"
-              >
-                {title}
-              </Typography>
-            </Media.Overlay>
-          )
-        : null}
+      {title != null ? (
+        <Media.Overlay
+          placement="bottom"
+          className={cx(
+            "q-media-card-caption",
+            !scrim && "q-media-card-caption-bare",
+            TITLE_VARIANT_CLASS[titleVariant],
+          )}
+        >
+          <Typography
+            as="span"
+            variant={titleVariant === "accent" ? "accent-xs-bold" : "body-lg-semi-bold"}
+            color="primary"
+            className="q-media-card-title"
+          >
+            {title}
+          </Typography>
+        </Media.Overlay>
+      ) : null}
       {action != null ? <span className="q-media-card-action-slot">{action}</span> : null}
       {children}
     </>
-  )
+  );
 
   return useRender({
     render,
-    defaultTagName: 'div',
+    defaultTagName: "div",
     ref: ref as Ref<Element> | undefined,
     props: {
       className: cx(
-        'q-media-card',
+        "q-media-card",
         FRAME_CLASS[frame],
-        selected && 'ring-2 ring-q-brand-primary',
+        selected && "ring-2 ring-q-brand-primary",
         className,
       ),
       children: content,
       ...props,
     },
-  })
+  });
 }
 
-export type MediaCardActionProps = ComponentPropsWithRef<'button'>
+export type MediaCardActionProps = ComponentPropsWithRef<"button">;
 
 /**
  * The on-media glass chip (Figma "secondary - default - xs - r_sm",
@@ -156,12 +154,8 @@ export type MediaCardActionProps = ComponentPropsWithRef<'button'>
  */
 function Action({ className, type, ...props }: MediaCardActionProps) {
   return (
-    <button
-      type={type ?? 'button'}
-      className={cx('q-media-card-action', className)}
-      {...props}
-    />
-  )
+    <button type={type ?? "button"} className={cx("q-media-card-action", className)} {...props} />
+  );
 }
 
-export const MediaCard = Object.assign(Root, { Action })
+export const MediaCard = Object.assign(Root, { Action });

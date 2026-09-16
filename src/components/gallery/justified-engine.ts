@@ -1,4 +1,4 @@
-import type { GalleryItem } from './types.ts'
+import type { GalleryItem } from "./types.ts";
 
 /**
  * JustifiedLayoutEngine — a bespoke, out-of-React layout + windowing engine for
@@ -28,53 +28,53 @@ import type { GalleryItem } from './types.ts'
 /** One tile's resolved rectangle, relative to its row's top-left. */
 export interface TileRect {
   /** Index into the flat items array. */
-  index: number
-  item: GalleryItem
+  index: number;
+  item: GalleryItem;
   /** Horizontal offset within the content column. */
-  x: number
-  width: number
-  height: number
+  x: number;
+  width: number;
+  height: number;
 }
 
-export type LayoutRowType = 'header' | 'tiles'
+export type LayoutRowType = "header" | "tiles";
 
 /** A laid-out row — either a dated group header or a justified row of tiles. */
 export interface LayoutRow {
-  type: LayoutRowType
+  type: LayoutRowType;
   /** Absolute top offset within the scrollable content. */
-  y: number
-  height: number
+  y: number;
+  height: number;
   /** Sequential index among rows (stable key). */
-  key: string
+  key: string;
   /** header only — the group label. */
-  label?: string
+  label?: string;
   /** tiles only — the justified tiles in this row. */
-  tiles?: TileRect[]
+  tiles?: TileRect[];
 }
 
 export interface Layout {
-  rows: LayoutRow[]
-  totalHeight: number
+  rows: LayoutRow[];
+  totalHeight: number;
   /** Number of items covered by this layout (for infinite-scroll bookkeeping). */
-  itemCount: number
+  itemCount: number;
 }
 
 export interface EngineConfig {
   /** Inner content width in px (viewport clientWidth). */
-  containerWidth: number
+  containerWidth: number;
   /** Target/base row height in px — the density knob. */
-  targetRowHeight: number
+  targetRowHeight: number;
   /** Gap between tiles AND between rows, in px. */
-  gap: number
+  gap: number;
   /** Header band height in px. */
-  headerHeight: number
+  headerHeight: number;
   /** Extra space below each group. */
-  groupGap: number
+  groupGap: number;
   /**
    * Clamp on the per-row aspect sum before a row is force-closed, so a run of
    * ultra-wide panoramas can't produce a single skyscraper-tall row.
    */
-  maxRowHeight: number
+  maxRowHeight: number;
 }
 
 const DEFAULT_CONFIG: EngineConfig = {
@@ -84,155 +84,156 @@ const DEFAULT_CONFIG: EngineConfig = {
   headerHeight: 44,
   groupGap: 20,
   maxRowHeight: 460,
-}
+};
 
 interface GroupRange {
-  id: string
-  label: string
-  start: number
-  end: number // exclusive
+  id: string;
+  label: string;
+  start: number;
+  end: number; // exclusive
 }
 
 export class JustifiedLayoutEngine {
-  private items: GalleryItem[] = []
-  private groups: GroupRange[] = []
-  private config: EngineConfig = { ...DEFAULT_CONFIG }
-  private layout: Layout = { rows: [], totalHeight: 0, itemCount: 0 }
+  private items: GalleryItem[] = [];
+  private groups: GroupRange[] = [];
+  private config: EngineConfig = { ...DEFAULT_CONFIG };
+  private layout: Layout = { rows: [], totalHeight: 0, itemCount: 0 };
   /** Per-item resolved geometry, indexed by item index — powers scroll anchoring. */
-  private itemTops: number[] = []
-  private itemHeights: number[] = []
-  private dirty = true
+  private itemTops: number[] = [];
+  private itemHeights: number[] = [];
+  private dirty = true;
 
   setItems(items: GalleryItem[]): void {
-    this.items = items
-    this.recomputeGroups()
-    this.dirty = true
+    this.items = items;
+    this.recomputeGroups();
+    this.dirty = true;
   }
 
   /** Returns true if any geometry field actually changed. */
   setConfig(patch: Partial<EngineConfig>): boolean {
-    let changed = false
+    let changed = false;
     for (const key of Object.keys(patch) as (keyof EngineConfig)[]) {
-      const next = patch[key]
+      const next = patch[key];
       if (next != null && next !== this.config[key]) {
-        this.config[key] = next
-        changed = true
+        this.config[key] = next;
+        changed = true;
       }
     }
-    if (changed) this.dirty = true
-    return changed
+    if (changed) this.dirty = true;
+    return changed;
   }
 
   getConfig(): Readonly<EngineConfig> {
-    return this.config
+    return this.config;
   }
 
   private recomputeGroups(): void {
-    const groups: GroupRange[] = []
-    let current: GroupRange | null = null
+    const groups: GroupRange[] = [];
+    let current: GroupRange | null = null;
     for (let i = 0; i < this.items.length; i++) {
-      const item = this.items[i]!
+      const item = this.items[i]!;
       if (current == null || current.id !== item.groupId) {
-        if (current != null) current.end = i
-        current = { id: item.groupId, label: item.groupLabel, start: i, end: i + 1 }
-        groups.push(current)
+        if (current != null) current.end = i;
+        current = { id: item.groupId, label: item.groupLabel, start: i, end: i + 1 };
+        groups.push(current);
       }
     }
-    if (current != null) current.end = this.items.length
-    this.groups = groups
+    if (current != null) current.end = this.items.length;
+    this.groups = groups;
   }
 
   /** Compute (or return cached) layout for the current items + config. */
   compute(): Layout {
-    if (!this.dirty) return this.layout
+    if (!this.dirty) return this.layout;
 
-    const { containerWidth, targetRowHeight, gap, headerHeight, groupGap, maxRowHeight } = this.config
-    const rows: LayoutRow[] = []
-    const itemTops = new Array<number>(this.items.length).fill(0)
-    const itemHeights = new Array<number>(this.items.length).fill(0)
+    const { containerWidth, targetRowHeight, gap, headerHeight, groupGap, maxRowHeight } =
+      this.config;
+    const rows: LayoutRow[] = [];
+    const itemTops = new Array<number>(this.items.length).fill(0);
+    const itemHeights = new Array<number>(this.items.length).fill(0);
 
     if (containerWidth <= 0) {
-      this.layout = { rows: [], totalHeight: 0, itemCount: this.items.length }
-      this.itemTops = itemTops
-      this.itemHeights = itemHeights
-      this.dirty = false
-      return this.layout
+      this.layout = { rows: [], totalHeight: 0, itemCount: this.items.length };
+      this.itemTops = itemTops;
+      this.itemHeights = itemHeights;
+      this.dirty = false;
+      return this.layout;
     }
 
-    let y = 0
-    let rowKey = 0
+    let y = 0;
+    let rowKey = 0;
 
     for (const group of this.groups) {
       // Group header band.
       rows.push({
-        type: 'header',
+        type: "header",
         y,
         height: headerHeight,
         key: `h-${group.id}`,
         label: group.label,
-      })
-      y += headerHeight
+      });
+      y += headerHeight;
 
       // Greedily pack this group's items into justified rows.
-      let rowStart = group.start
-      let aspectSum = 0
+      let rowStart = group.start;
+      let aspectSum = 0;
 
       const flushRow = (endExclusive: number, isLastRowOfGroup: boolean) => {
-        const n = endExclusive - rowStart
-        if (n <= 0) return
-        const totalGap = gap * (n - 1)
+        const n = endExclusive - rowStart;
+        if (n <= 0) return;
+        const totalGap = gap * (n - 1);
         // The height that makes the row exactly fill the width.
-        let rowHeight = (containerWidth - totalGap) / aspectSum
+        let rowHeight = (containerWidth - totalGap) / aspectSum;
         // The final partial row of a group is never stretched past the target.
-        if (isLastRowOfGroup && rowHeight > targetRowHeight) rowHeight = targetRowHeight
+        if (isLastRowOfGroup && rowHeight > targetRowHeight) rowHeight = targetRowHeight;
         // Guard against a run of panoramas producing a razor-thin row, or a
         // single portrait producing a skyscraper.
-        rowHeight = Math.min(rowHeight, maxRowHeight)
+        rowHeight = Math.min(rowHeight, maxRowHeight);
 
-        const tiles: TileRect[] = []
-        let x = 0
+        const tiles: TileRect[] = [];
+        let x = 0;
         for (let i = rowStart; i < endExclusive; i++) {
-          const item = this.items[i]!
-          const aspect = item.width / item.height
-          const w = rowHeight * aspect
-          tiles.push({ index: i, item, x, width: w, height: rowHeight })
-          itemTops[i] = y
-          itemHeights[i] = rowHeight
-          x += w + gap
+          const item = this.items[i]!;
+          const aspect = item.width / item.height;
+          const w = rowHeight * aspect;
+          tiles.push({ index: i, item, x, width: w, height: rowHeight });
+          itemTops[i] = y;
+          itemHeights[i] = rowHeight;
+          x += w + gap;
         }
-        rows.push({ type: 'tiles', y, height: rowHeight, key: `r-${rowKey++}`, tiles })
-        y += rowHeight + gap
-      }
+        rows.push({ type: "tiles", y, height: rowHeight, key: `r-${rowKey++}`, tiles });
+        y += rowHeight + gap;
+      };
 
       for (let i = group.start; i < group.end; i++) {
-        const item = this.items[i]!
-        const aspect = item.width / item.height
-        aspectSum += aspect
+        const item = this.items[i]!;
+        const aspect = item.width / item.height;
+        aspectSum += aspect;
         // Natural width of the row so far at the target height.
-        const naturalWidth = targetRowHeight * aspectSum + gap * (i - rowStart)
+        const naturalWidth = targetRowHeight * aspectSum + gap * (i - rowStart);
         if (naturalWidth >= containerWidth) {
-          flushRow(i + 1, false)
-          rowStart = i + 1
-          aspectSum = 0
+          flushRow(i + 1, false);
+          rowStart = i + 1;
+          aspectSum = 0;
         }
       }
       // Trailing partial row.
-      if (rowStart < group.end) flushRow(group.end, true)
+      if (rowStart < group.end) flushRow(group.end, true);
 
       // Remove the trailing inter-row gap, add the group gap instead.
-      y = y - gap + groupGap
+      y = y - gap + groupGap;
     }
 
-    const totalHeight = Math.max(0, y - groupGap)
-    this.layout = { rows, totalHeight, itemCount: this.items.length }
-    this.itemTops = itemTops
-    this.itemHeights = itemHeights
-    this.dirty = false
-    return this.layout
+    const totalHeight = Math.max(0, y - groupGap);
+    this.layout = { rows, totalHeight, itemCount: this.items.length };
+    this.itemTops = itemTops;
+    this.itemHeights = itemHeights;
+    this.dirty = false;
+    return this.layout;
   }
 
   getLayout(): Layout {
-    return this.compute()
+    return this.compute();
   }
 
   /**
@@ -240,57 +241,59 @@ export class JustifiedLayoutEngine {
    * viewport expanded by `overscanPx` on each edge. Binary-searches the rows
    * (which are sorted by `y`) so cost is O(log n), independent of dataset size.
    */
-  getWindow(scrollTop: number, viewportHeight: number, overscanPx: number): { startRow: number, endRow: number } {
-    const { rows } = this.compute()
-    if (rows.length === 0) return { startRow: 0, endRow: 0 }
+  getWindow(
+    scrollTop: number,
+    viewportHeight: number,
+    overscanPx: number,
+  ): { startRow: number; endRow: number } {
+    const { rows } = this.compute();
+    if (rows.length === 0) return { startRow: 0, endRow: 0 };
 
-    const top = scrollTop - overscanPx
-    const bottom = scrollTop + viewportHeight + overscanPx
+    const top = scrollTop - overscanPx;
+    const bottom = scrollTop + viewportHeight + overscanPx;
 
     // First row whose bottom edge is past `top`.
-    let lo = 0
-    let hi = rows.length - 1
-    let startRow = rows.length
+    let lo = 0;
+    let hi = rows.length - 1;
+    let startRow = rows.length;
     while (lo <= hi) {
-      const mid = (lo + hi) >> 1
-      const row = rows[mid]!
+      const mid = (lo + hi) >> 1;
+      const row = rows[mid]!;
       if (row.y + row.height >= top) {
-        startRow = mid
-        hi = mid - 1
-      }
-      else {
-        lo = mid + 1
+        startRow = mid;
+        hi = mid - 1;
+      } else {
+        lo = mid + 1;
       }
     }
 
     // First row whose top edge is at/after `bottom` → the exclusive end.
-    lo = 0
-    hi = rows.length - 1
-    let endRow = rows.length
+    lo = 0;
+    hi = rows.length - 1;
+    let endRow = rows.length;
     while (lo <= hi) {
-      const mid = (lo + hi) >> 1
-      const row = rows[mid]!
+      const mid = (lo + hi) >> 1;
+      const row = rows[mid]!;
       if (row.y > bottom) {
-        endRow = mid
-        hi = mid - 1
-      }
-      else {
-        lo = mid + 1
+        endRow = mid;
+        hi = mid - 1;
+      } else {
+        lo = mid + 1;
       }
     }
 
-    return { startRow: Math.min(startRow, rows.length), endRow }
+    return { startRow: Math.min(startRow, rows.length), endRow };
   }
 
   /** Top offset of an item — used to re-pin the scroll after a re-layout. */
   getItemTop(index: number): number {
-    this.compute()
-    return this.itemTops[index] ?? 0
+    this.compute();
+    return this.itemTops[index] ?? 0;
   }
 
   getItemHeight(index: number): number {
-    this.compute()
-    return this.itemHeights[index] ?? 0
+    this.compute();
+    return this.itemHeights[index] ?? 0;
   }
 
   /**
@@ -299,23 +302,22 @@ export class JustifiedLayoutEngine {
    * this before a density/resize re-layout and restores it afterwards so the
    * content under the user's eyes stays put (scroll anchoring).
    */
-  findAnchor(scrollTop: number): { index: number, offset: number } {
-    this.compute()
-    if (this.items.length === 0) return { index: 0, offset: 0 }
+  findAnchor(scrollTop: number): { index: number; offset: number } {
+    this.compute();
+    if (this.items.length === 0) return { index: 0, offset: 0 };
     // Binary search itemTops for the last item whose top is <= scrollTop.
-    let lo = 0
-    let hi = this.itemTops.length - 1
-    let index = 0
+    let lo = 0;
+    let hi = this.itemTops.length - 1;
+    let index = 0;
     while (lo <= hi) {
-      const mid = (lo + hi) >> 1
+      const mid = (lo + hi) >> 1;
       if (this.itemTops[mid]! <= scrollTop) {
-        index = mid
-        lo = mid + 1
-      }
-      else {
-        hi = mid - 1
+        index = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
       }
     }
-    return { index, offset: scrollTop - (this.itemTops[index] ?? 0) }
+    return { index, offset: scrollTop - (this.itemTops[index] ?? 0) };
   }
 }

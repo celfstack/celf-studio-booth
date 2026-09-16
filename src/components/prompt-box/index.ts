@@ -1,4 +1,4 @@
-export { PromptBox } from './prompt-box.tsx'
+export { PromptBox } from "./prompt-box.tsx";
 export type {
   PromptBoxBodyProps,
   PromptBoxFieldProps,
@@ -10,4 +10,4 @@ export type {
   PromptBoxSurface,
   PromptBoxUploadProps,
   PromptBoxUploadsProps,
-} from './prompt-box.tsx'
+} from "./prompt-box.tsx";

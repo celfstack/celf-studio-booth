@@ -108,7 +108,10 @@
   @apply q-focus-ring;
 
   &:hover {
-    background-image: linear-gradient(var(--hf-color-transparent-light-20), var(--hf-color-transparent-light-20));
+    background-image: linear-gradient(
+      var(--hf-color-transparent-light-20),
+      var(--hf-color-transparent-light-20)
+    );
   }
 
   &:disabled {

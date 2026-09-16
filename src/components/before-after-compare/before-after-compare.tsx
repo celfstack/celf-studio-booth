@@ -1,13 +1,13 @@
-'use client'
+"use client";
 
-import type { ComponentProps, KeyboardEvent, PointerEvent, ReactNode } from 'react'
-import { useCallback, useRef, useState } from 'react'
-import IconChevronLeftOutlined from '@material-symbols/svg-400/outlined/chevron_left.svg?react'
-import IconChevronRightOutlined from '@material-symbols/svg-400/outlined/chevron_right.svg?react'
-import { Icon } from '@higgsfield/quanta/icon'
-import { Media } from '@higgsfield/quanta/media'
-import { Typography } from '@higgsfield/quanta/typography'
-import { cn } from '@/lib/utils'
+import type { ComponentProps, KeyboardEvent, PointerEvent, ReactNode } from "react";
+import { useCallback, useRef, useState } from "react";
+import IconChevronLeftOutlined from "@material-symbols/svg-400/outlined/chevron_left.svg?react";
+import IconChevronRightOutlined from "@material-symbols/svg-400/outlined/chevron_right.svg?react";
+import { Icon } from "@higgsfield/quanta/icon";
+import { Media } from "@higgsfield/quanta/media";
+import { Typography } from "@higgsfield/quanta/typography";
+import { cn } from "@/lib/utils";
 
 /**
  * BeforeAfterCompare — a draggable before/after image comparison slider. Quanta
@@ -32,109 +32,109 @@ import { cn } from '@/lib/utils'
 
 export interface BeforeAfterCompareProps {
   /** The "before" image (the original) — revealed on the LEFT of the divider. */
-  beforeSrc: string
+  beforeSrc: string;
   /** The "after" image (the enhanced result) — fills the frame behind the divider. */
-  afterSrc: string
+  afterSrc: string;
   /** Alt text for the before image. */
-  beforeAlt?: string
+  beforeAlt?: string;
   /** Alt text for the after image. */
-  afterAlt?: string
+  afterAlt?: string;
   /** Corner chip over the before (left) side. Set `null` to hide. Default "Before". */
-  beforeLabel?: ReactNode
+  beforeLabel?: ReactNode;
   /** Corner chip over the after (right) side. Set `null` to hide. Default "After". */
-  afterLabel?: ReactNode
+  afterLabel?: ReactNode;
   /** Aspect ratio, forwarded to `Media` (default `square`). */
-  ratio?: ComponentProps<typeof Media>['ratio']
+  ratio?: ComponentProps<typeof Media>["ratio"];
   /** Initial divider position, 0–100 (percent from the left). Default 50. */
-  defaultPosition?: number
-  className?: string
+  defaultPosition?: number;
+  className?: string;
 }
 
-const clamp = (value: number) => Math.min(100, Math.max(0, value))
+const clamp = (value: number) => Math.min(100, Math.max(0, value));
 
 /** A small frosted corner label — "Before" / "After". */
-function CompareLabel({ side, children }: { side: 'left' | 'right', children: ReactNode }) {
+function CompareLabel({ side, children }: { side: "left" | "right"; children: ReactNode }) {
   return (
     <span
       className={cn(
-        'pointer-events-none absolute top-3 z-10 rounded-q-full bg-q-transparent-dark-60 px-2.5 py-1 backdrop-blur-sm',
-        side === 'left' ? 'left-3' : 'right-3',
+        "pointer-events-none absolute top-3 z-10 rounded-q-full bg-q-transparent-dark-60 px-2.5 py-1 backdrop-blur-sm",
+        side === "left" ? "left-3" : "right-3",
       )}
     >
       <Typography as="span" variant="caption-xs-medium" color="primary" className="uppercase">
         {children}
       </Typography>
     </span>
-  )
+  );
 }
 
 export function BeforeAfterCompare({
   beforeSrc,
   afterSrc,
-  beforeAlt = 'Before',
-  afterAlt = 'After',
-  beforeLabel = 'Before',
-  afterLabel = 'After',
-  ratio = 'square',
+  beforeAlt = "Before",
+  afterAlt = "After",
+  beforeLabel = "Before",
+  afterLabel = "After",
+  ratio = "square",
   defaultPosition = 50,
   className,
 }: BeforeAfterCompareProps) {
-  const frameRef = useRef<HTMLDivElement>(null)
-  const draggingRef = useRef(false)
-  const [position, setPosition] = useState(() => clamp(defaultPosition))
+  const frameRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef(false);
+  const [position, setPosition] = useState(() => clamp(defaultPosition));
 
   const updateFromClientX = useCallback((clientX: number) => {
-    const frame = frameRef.current
-    if (frame == null) return
-    const rect = frame.getBoundingClientRect()
-    if (rect.width === 0) return
-    setPosition(clamp(((clientX - rect.left) / rect.width) * 100))
-  }, [])
+    const frame = frameRef.current;
+    if (frame == null) return;
+    const rect = frame.getBoundingClientRect();
+    if (rect.width === 0) return;
+    setPosition(clamp(((clientX - rect.left) / rect.width) * 100));
+  }, []);
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    draggingRef.current = true
-    event.currentTarget.setPointerCapture(event.pointerId)
-    updateFromClientX(event.clientX)
-  }
+    draggingRef.current = true;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    updateFromClientX(event.clientX);
+  };
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current) return
-    updateFromClientX(event.clientX)
-  }
+    if (!draggingRef.current) return;
+    updateFromClientX(event.clientX);
+  };
 
   const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    draggingRef.current = false
+    draggingRef.current = false;
     if (event.currentTarget.hasPointerCapture(event.pointerId))
-      event.currentTarget.releasePointerCapture(event.pointerId)
-  }
+      event.currentTarget.releasePointerCapture(event.pointerId);
+  };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     switch (event.key) {
-      case 'ArrowLeft':
-        setPosition(p => clamp(p - 2))
-        event.preventDefault()
-        break
-      case 'ArrowRight':
-        setPosition(p => clamp(p + 2))
-        event.preventDefault()
-        break
-      case 'Home':
-        setPosition(0)
-        event.preventDefault()
-        break
-      case 'End':
-        setPosition(100)
-        event.preventDefault()
-        break
+      case "ArrowLeft":
+        setPosition((p) => clamp(p - 2));
+        event.preventDefault();
+        break;
+      case "ArrowRight":
+        setPosition((p) => clamp(p + 2));
+        event.preventDefault();
+        break;
+      case "Home":
+        setPosition(0);
+        event.preventDefault();
+        break;
+      case "End":
+        setPosition(100);
+        event.preventDefault();
+        break;
     }
-  }
+  };
 
-  const rounded = Math.round(position)
+  const rounded = Math.round(position);
 
   return (
     <div
       ref={frameRef}
-      className={cn('relative touch-none select-none overflow-hidden rounded-q-300', className)}
+      className={cn("relative touch-none select-none overflow-hidden rounded-q-300", className)}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -159,7 +159,10 @@ export function BeforeAfterCompare({
 
       {/* Divider line + draggable handle. */}
       <div className="pointer-events-none absolute inset-y-0 z-10" style={{ left: `${position}%` }}>
-        <span className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-white/90 shadow-q-overlay" aria-hidden="true" />
+        <span
+          className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-white/90 shadow-q-overlay"
+          aria-hidden="true"
+        />
         <button
           type="button"
           role="slider"
@@ -177,5 +180,5 @@ export function BeforeAfterCompare({
         </button>
       </div>
     </div>
-  )
+  );
 }

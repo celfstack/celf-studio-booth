@@ -49,7 +49,7 @@
   }
 
   &::before {
-    background-image: linear-gradient(to top, transparent, rgba(255, 255, 255, 0.20));
+    background-image: linear-gradient(to top, transparent, rgba(255, 255, 255, 0.2));
     mix-blend-mode: overlay;
   }
 
