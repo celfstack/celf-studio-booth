@@ -15,6 +15,10 @@ import { Route as DecorateRouteImport } from './routes/decorate'
 import { Route as PrintRouteImport } from './routes/print'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiTogetherRouteImport } from './routes/api.together'
+import { Route as TogetherIndexRouteImport } from './routes/together.index'
+import { Route as TogetherRoomIdRouteImport } from './routes/together.$roomId'
+import { Route as ApiTogetherRoomIdRouteImport } from './routes/api.together.$roomId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +50,26 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTogetherRoute = ApiTogetherRouteImport.update({
+  id: '/api/together',
+  path: '/api/together',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TogetherIndexRoute = TogetherIndexRouteImport.update({
+  id: '/together/',
+  path: '/together/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TogetherRoomIdRoute = TogetherRoomIdRouteImport.update({
+  id: '/together/$roomId',
+  path: '/together/$roomId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTogetherRoomIdRoute = ApiTogetherRoomIdRouteImport.update({
+  id: '/$roomId',
+  path: '/$roomId',
+  getParentRoute: () => ApiTogetherRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +78,10 @@ export interface FileRoutesByFullPath {
   '/print': typeof PrintRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/together': typeof ApiTogetherRouteWithChildren
+  '/together/$roomId': typeof TogetherRoomIdRoute
+  '/together/': typeof TogetherIndexRoute
+  '/api/together/$roomId': typeof ApiTogetherRoomIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +90,10 @@ export interface FileRoutesByTo {
   '/print': typeof PrintRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/together': typeof ApiTogetherRouteWithChildren
+  '/together/$roomId': typeof TogetherRoomIdRoute
+  '/together': typeof TogetherIndexRoute
+  '/api/together/$roomId': typeof ApiTogetherRoomIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,13 +103,36 @@ export interface FileRoutesById {
   '/print': typeof PrintRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/together': typeof ApiTogetherRouteWithChildren
+  '/together/$roomId': typeof TogetherRoomIdRoute
+  '/together/': typeof TogetherIndexRoute
+  '/api/together/$roomId': typeof ApiTogetherRoomIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/booth' | '/decorate' | '/print' | '/robots.txt' | '/sitemap.xml'
+    | '/'
+    | '/booth'
+    | '/decorate'
+    | '/print'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/api/together'
+    | '/together/$roomId'
+    | '/together/'
+    | '/api/together/$roomId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/booth' | '/decorate' | '/print' | '/robots.txt' | '/sitemap.xml'
+  to:
+    | '/'
+    | '/booth'
+    | '/decorate'
+    | '/print'
+    | '/robots.txt'
+    | '/sitemap.xml'
+    | '/api/together'
+    | '/together/$roomId'
+    | '/together'
+    | '/api/together/$roomId'
   id:
     | '__root__'
     | '/'
@@ -86,6 +141,10 @@ export interface FileRouteTypes {
     | '/print'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/together'
+    | '/together/$roomId'
+    | '/together/'
+    | '/api/together/$roomId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,6 +154,9 @@ export interface RootRouteChildren {
   PrintRoute: typeof PrintRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiTogetherRoute: typeof ApiTogetherRouteWithChildren
+  TogetherRoomIdRoute: typeof TogetherRoomIdRoute
+  TogetherIndexRoute: typeof TogetherIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -141,8 +203,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/together': {
+      id: '/api/together'
+      path: '/api/together'
+      fullPath: '/api/together'
+      preLoaderRoute: typeof ApiTogetherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/together/': {
+      id: '/together/'
+      path: '/together'
+      fullPath: '/together/'
+      preLoaderRoute: typeof TogetherIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/together/$roomId': {
+      id: '/together/$roomId'
+      path: '/together/$roomId'
+      fullPath: '/together/$roomId'
+      preLoaderRoute: typeof TogetherRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/together/$roomId': {
+      id: '/api/together/$roomId'
+      path: '/$roomId'
+      fullPath: '/api/together/$roomId'
+      preLoaderRoute: typeof ApiTogetherRoomIdRouteImport
+      parentRoute: typeof ApiTogetherRoute
+    }
   }
 }
+
+interface ApiTogetherRouteChildren {
+  ApiTogetherRoomIdRoute: typeof ApiTogetherRoomIdRoute
+}
+
+const ApiTogetherRouteChildren: ApiTogetherRouteChildren = {
+  ApiTogetherRoomIdRoute: ApiTogetherRoomIdRoute,
+}
+
+const ApiTogetherRouteWithChildren = ApiTogetherRoute._addFileChildren(
+  ApiTogetherRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -151,6 +253,9 @@ const rootRouteChildren: RootRouteChildren = {
   PrintRoute: PrintRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiTogetherRoute: ApiTogetherRouteWithChildren,
+  TogetherRoomIdRoute: TogetherRoomIdRoute,
+  TogetherIndexRoute: TogetherIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

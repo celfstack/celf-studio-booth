@@ -442,3 +442,102 @@
     animation: none;
   }
 }
+
+/* Shared booth: the same paper, ink and tactile print language as the solo booth. */
+.together-page { min-height:100dvh; background:var(--color-paper); color:var(--color-ink); padding:0 32px 32px; }
+.together-nav { max-width:1120px; margin:auto; min-height:96px; display:flex; align-items:center; justify-content:space-between; gap:20px; border-bottom:1px solid #2a241e18; }
+.together-nav > a:last-child { font-size:15px; color:var(--color-ink-soft); }
+.together-wordmark { font-size:30px; letter-spacing:-1.5px; }
+.together-intro { max-width:1060px; margin:72px auto 55px; display:grid; grid-template-columns:1.15fr 1fr; gap:80px; align-items:center; }
+.together-eyebrow { font-family:var(--font-type); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--color-rust); margin-bottom:20px; }
+.together-intro h1 { font-size:clamp(38px,4.5vw,60px); line-height:1.08; letter-spacing:-2px; }
+.together-intro h1 em { font-style:normal; color:var(--color-rust); }
+.together-lede { color:var(--color-ink-soft); font-size:19px; line-height:1.5; margin-top:22px; }
+.together-steps { display:grid; gap:11px; margin:30px 0; font-size:17px; }
+.together-steps span { font-family:var(--font-type); font-size:11px; color:var(--color-rust); margin-right:14px; }
+.together-create { max-width:360px; display:grid; gap:10px; }
+.together-create label { font-size:15px; }
+.together-create input,.together-name-input { width:100%; border:1px solid #2a241e36; border-radius:5px; padding:12px 14px; background:#fff9; outline-offset:4px; }
+.together-primary,.together-secondary { display:inline-flex; align-items:center; justify-content:center; gap:8px; border-radius:999px; padding:13px 25px; font-size:17px; cursor:pointer; transition:background .18s,transform .18s; text-align:center; }
+.together-primary { background:var(--color-rust); color:var(--color-paper); border:1px solid var(--color-rust); }
+.together-primary:hover:not(:disabled) { background:var(--color-rust-deep); transform:translateY(-1px); }
+.together-secondary { border:1px solid #2a241e45; background:transparent; }
+.together-secondary:hover:not(:disabled) { background:#2a241e08; }
+.together-primary:disabled,.together-secondary:disabled { opacity:.45; cursor:not-allowed; }
+.together-fine { font-size:12px; color:var(--color-ink-soft); line-height:1.65; margin-top:17px; max-width:370px; }
+.together-text-link { display:inline-block; text-decoration:underline; text-underline-offset:4px; font-size:14px; margin-top:16px; cursor:pointer; }
+.together-error { color:#8b2b22; background:#a03d2e0b; padding:12px 16px; border-radius:5px; font-size:15px; line-height:1.45; margin-top:12px; }
+.together-illustration { position:relative; text-align:center; padding:20px; }
+.together-paper-strip { width:207px; background:#282420; padding:12px 12px 8px; transform:rotate(7deg); margin:auto; box-shadow:10px 16px 28px #2a241e25; }
+.together-demo-pair { display:flex; height:104px; margin-bottom:7px; background:#d0c4b1; overflow:hidden; }
+.together-demo-pair svg { width:50%; height:100%; fill:#f6eddc; stroke:#5c5145; stroke-width:1.5; }
+.together-demo-pair .together-person-two { background:#b9beb1; }
+.together-paper-strip > p { color:#e5d9c6; font-size:18px; padding:6px 0; }
+.together-paper-strip > p span { font-family:var(--font-type); font-size:9px; letter-spacing:3px; }
+.together-postmark { position:absolute; right:0; top:-13px; z-index:1; border:1px solid #a03d2e88; padding:12px; border-radius:50%; color:var(--color-rust); transform:rotate(-13deg); font-size:16px; }
+.together-postmark span { font-family:var(--font-type); font-size:9px; }
+.together-hand-note { margin-top:30px; transform:rotate(-5deg); font-size:18px; color:var(--color-rust); }
+.together-star { position:absolute; bottom:26px; right:2px; width:64px; }
+.together-footer { max-width:1120px; margin:40px auto 0; padding-top:24px; border-top:1px solid #2a241e18; text-align:center; font-family:var(--font-type); font-size:10px; color:var(--color-ink-soft); letter-spacing:1px; }
+.together-home-link { display:flex; align-items:center; gap:18px; max-width:370px; margin:25px auto 0; padding:17px 23px; border-top:1px solid #2a241e30; border-bottom:1px solid #2a241e30; text-align:left; }
+.together-home-link:hover { background:#a03d2e05; }
+.together-home-link strong { display:block; font-size:21px; font-weight:400; color:var(--color-rust); }
+.together-home-link small { display:block; font-size:14px; color:var(--color-ink-soft); }
+.together-room { max-width:900px; margin:42px auto; text-align:center; }
+.together-room h1 { font-size:clamp(30px,4vw,44px); line-height:1.12; letter-spacing:-1px; }
+.together-room-lede { color:var(--color-ink-soft); margin:12px auto 22px; font-size:18px; max-width:540px; }
+.together-progress { display:flex; justify-content:center; gap:24px; margin-bottom:30px; font-family:var(--font-type); font-size:10px; color:var(--color-ink-soft); }
+.together-progress [aria-current=step] { color:var(--color-rust); }
+.together-camera { display:grid; grid-template-columns:1fr 1fr; width:min(100%,640px); margin:24px auto 0; border:9px solid #2a241e; border-radius:5px; overflow:hidden; background:#e6dece; }
+.together-half { position:relative; aspect-ratio:2/3; min-width:0; overflow:hidden; background:#e7dfd1; display:flex; align-items:center; justify-content:center; }
+.together-half + .together-half { border-left:2px solid #2a241e; }
+.together-half video,.together-half > img { position:absolute; width:100%; height:100%; object-fit:cover; }
+.together-half video { transform:scaleX(-1); }
+.together-half-label { position:absolute; left:10px; bottom:10px; background:#faf6efe8; padding:4px 11px; border-radius:20px; font-size:13px; z-index:2; }
+.together-half-empty { padding:20px; color:#847867; font-size:18px; }
+.together-half-empty span { display:block; font-size:45px; margin-bottom:12px; color:#a03d2e66; }
+.together-count { position:absolute; inset:0; display:grid; place-items:center; font-size:80px; color:white; text-shadow:0 2px 20px #0009; background:#0001; z-index:3; }
+.together-actions { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:22px auto 0; }
+.together-pose { font-family:var(--font-type); font-size:12px; color:var(--color-ink-soft); margin:18px 0; }
+.together-contact-sheet { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:640px; margin:22px auto; }
+.together-contact-sheet button { position:relative; border:2px solid transparent; border-radius:3px; overflow:hidden; }
+.together-contact-sheet button[aria-pressed=true] { border-color:var(--color-rust); }
+.together-contact-sheet img { width:100%; aspect-ratio:2/3; object-fit:cover; }
+.together-contact-sheet span { position:absolute; bottom:4px; left:4px; font-size:11px; padding:1px 7px; background:#faf6efeb; border-radius:10px; }
+.together-review-label { font-size:14px; color:var(--color-ink-soft); margin:12px auto; }
+.together-share-card { padding:25px; max-width:550px; margin:25px auto; border:1px solid #2a241e26; border-radius:8px; background:#fff5; text-align:left; }
+.together-share-card label { display:block; font-size:14px; margin-bottom:8px; }
+.together-link-field { display:flex; gap:8px; }
+.together-link-field input { min-width:0; width:100%; padding:10px; border:1px solid #2a241e25; background:var(--color-paper); border-radius:4px; font-size:13px; }
+.together-link-field button { white-space:nowrap; padding:8px 20px; }
+.together-status { display:inline-flex; align-items:center; gap:8px; color:var(--color-rust); font-size:14px; }
+.together-status::before { content:""; width:6px; height:6px; background:currentColor; border-radius:50%; }
+.together-mini-strip { width:190px; padding:9px; margin:28px auto 0; background:#282420; box-shadow:4px 9px 20px #2a241e22; transform:rotate(-3deg); }
+.together-mini-pair { display:grid; grid-template-columns:1fr 1fr; aspect-ratio:4/3; margin-bottom:6px; background:#e0d7c6; overflow:hidden; }
+.together-mini-pair img { width:100%; height:100%; object-fit:cover; }
+.together-mini-pair span { display:grid; place-items:center; color:#a03d2e88; font-size:23px; }
+.together-mini-strip > p { color:#e5d9c6; font-family:var(--font-type); font-size:9px; letter-spacing:2px; margin:10px 0 3px; }
+.together-room details { max-width:550px; margin:28px auto; color:var(--color-ink-soft); font-size:13px; text-align:left; }
+.together-room summary { cursor:pointer; text-align:center; }
+.together-danger { color:#9c362c; text-decoration:underline; text-underline-offset:4px; margin-top:12px; cursor:pointer; }
+.together-fine.center { margin-left:auto; margin-right:auto; }
+@media(max-width:700px) {
+ .together-page { padding:0 18px 24px; }.together-nav { min-height:76px; }.together-wordmark { font-size:26px; }
+ .together-intro { margin:36px auto; display:flex; flex-direction:column; gap:38px; }.together-intro-copy { width:100%; max-width:430px; }.together-intro h1 { font-size:42px; }.together-lede { font-size:17px; }.together-create { max-width:none; }
+ .together-illustration { width:100%; max-width:310px; }.together-paper-strip { width:165px; }.together-demo-pair { height:80px; }.together-postmark { right:-2px; }
+ .together-room { margin:28px auto; }.together-progress { gap:14px; font-size:9px; }.together-room-lede { font-size:16px; }.together-camera { border-width:6px; }.together-half-empty { font-size:14px; padding:10px; }.together-half-label { font-size:11px; left:5px; bottom:6px; padding:3px 8px; }.together-count { font-size:56px; }
+ .together-share-card { padding:18px; }.together-contact-sheet { gap:6px; }.together-link-field { flex-direction:column; }.together-actions > button { font-size:15px; }
+}
+@media(prefers-reduced-motion:reduce) { .together-primary,.together-secondary { transition:none; } }
+
+.together-demo-pair svg path { fill:none; }
+.together-demo-pair svg path:first-child { fill:#f6eddc; }
+
+.together-mini-pair { height:129px; min-height:0; }
+.together-mini-pair img { min-width:0; min-height:0; }
+
+.booth-mode-picker { display:inline-flex; margin-top:22px; padding:4px; border:1px solid #2a241e25; border-radius:99px; gap:3px; font-size:15px; }
+.booth-mode-picker > span,.booth-mode-picker > a { padding:8px 18px; border-radius:99px; }
+.booth-mode-picker > span { background:var(--color-ink); color:var(--color-paper); }
+.booth-mode-picker > a { color:var(--color-rust); transition:background .2s; }
+.booth-mode-picker > a:hover { background:#a03d2e0a; }

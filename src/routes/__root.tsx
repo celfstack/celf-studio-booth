@@ -187,7 +187,11 @@ function RootShell({ children }: { children: ReactNode }) {
       <body className="bg-paper text-ink">
         {children}
         <Scripts />
-        <Analytics />
+        <Analytics beforeSend={(event) => {
+          // Private invitation URLs contain bearer capabilities in fragments.
+          // Keep the entire shared-room flow out of analytics.
+          return new URL(event.url).pathname.startsWith("/together/") ? null : event;
+        }} />
       </body>
     </html>
   );

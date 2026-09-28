@@ -4,6 +4,7 @@ import { saveImageBlob } from "../lib/download";
 import { renderStrip, stripDateLabel } from "../lib/strip/render";
 import {
   getSessionPhotos,
+  getTogetherLink,
   getSessionStrip,
   resetSession,
   setSessionStrip,
@@ -121,6 +122,8 @@ function Print() {
   );
 
   const onTakeAnother = useCallback(() => {
+    const together = getTogetherLink();
+    if (together) { window.location.assign(together); return; }
     resetSession();
     void navigate({ to: "/booth" });
   }, [navigate]);
@@ -209,7 +212,7 @@ function Print() {
           onClick={onTakeAnother}
           className="font-type text-[11px] text-ink-soft underline decoration-ink/25 underline-offset-4 transition-colors hover:text-rust"
         >
-          retake
+          {getTogetherLink() ? "back to our booth" : "retake"}
         </button>
         {downloadRecoveryUrl ? (
           <a
@@ -270,7 +273,7 @@ function Print() {
                 onClick={onTakeAnother}
                 className="underline underline-offset-4 transition-colors hover:text-paper"
               >
-                retake
+                {getTogetherLink() ? "back to our booth" : "retake"}
               </button>
               <span aria-hidden="true">·</span>
               <button

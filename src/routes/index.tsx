@@ -135,6 +135,10 @@ function Home() {
           <p className="font-hand mt-3 text-lg text-ink-soft sm:text-xl">
             a little photo booth, just for you
           </p>
+          <nav className="booth-mode-picker" aria-label="Choose your booth">
+            <span aria-current="page">Just me</span>
+            <a href="/together">Together, anywhere <span aria-hidden="true">♡</span></a>
+          </nav>
         </header>
 
         <button
@@ -189,6 +193,8 @@ function Home() {
           </span>
         </button>
       </div>
+
+
 
       <p className="font-type mt-6 text-center text-[10px] tracking-[.08em] text-ink-soft sm:text-xs">
         made with {"<3"} by{" "}

@@ -16,7 +16,9 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "typecheck:packages": "for dir in packages/*; do if [ -f \"$dir/package.json\" ]; then (cd \"$dir\" && bun run typecheck); fi; done",
-    "test:packages": "for dir in packages/*; do if [ -f \"$dir/package.json\" ]; then (cd \"$dir\" && bun run test); fi; done"
+    "test:packages": "for dir in packages/*; do if [ -f \"$dir/package.json\" ]; then (cd \"$dir\" && bun run test); fi; done",
+    "test:together": "tsx --test tests/together.test.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@base-ui/react": "1.5.0",
@@ -79,6 +81,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260615.1",
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
@@ -91,6 +94,7 @@
     "globals": "^15.15.0",
     "nitro": "3.0.260429-beta",
     "prettier": "^3.7.3",
+    "tsx": "^4.23.15",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1",
@@ -98,5 +102,9 @@
   },
   "overrides": {
     "@types/react": "19.2.15"
-  }
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.19.0"
 }
