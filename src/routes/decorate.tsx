@@ -2,10 +2,21 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveImageBlob } from "../lib/download";
 import { reframeStrip, renderStrip, type BorderStyle, type PrintLook } from "../lib/strip/render";
-import { getSessionPhotos, getSessionStrip, setSessionStrip } from "../lib/strip/session";
+import { useSharedEditor } from "../lib/together/editor";
+import { SharedSessionBoundary } from "../lib/together/session-boundary";
+import {
+  getTogetherLink,
+  getSessionPhotos,
+  getSessionStrip,
+  setSessionStrip,
+} from "../lib/strip/session";
 
 export const Route = createFileRoute("/decorate")({
-  component: Decorate,
+  component: () => (
+    <SharedSessionBoundary>
+      <Decorate />
+    </SharedSessionBoundary>
+  ),
 });
 
 type FormatId = "portrait" | "story";
@@ -764,6 +775,27 @@ function Decorate() {
   const historyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const applyingUndoRef = useRef(false);
   const [canUndo, setCanUndo] = useState(false);
+  const shared = useSharedEditor(
+    { formatId, backdrop, layout, effect, border, decorations, loosePrints, starItems, gemItems },
+    (value) => {
+      const next = value as unknown as EditorSnapshot;
+      setFormatId(next.formatId);
+      setBackdrop(next.backdrop);
+      setLayout(next.layout);
+      setEffect(next.effect);
+      setBorder(next.border);
+      setDecorations(next.decorations);
+      setLoosePrints(next.loosePrints);
+      setStarItems(next.starItems);
+      setGemItems(next.gemItems);
+    },
+  );
+  const [nickname, setNickname] = useState("");
+  useEffect(() => {
+    if (shared.client) setNickname(shared.client.presence.name);
+  }, [shared.client]);
+  const sharedUndoRef = useRef(shared);
+  sharedUndoRef.current = shared;
   activeBorderRef.current = border;
 
   useEffect(() => {
@@ -817,6 +849,10 @@ function Decorate() {
   );
 
   const undo = useCallback(() => {
+    if (sharedUndoRef.current.active) {
+      sharedUndoRef.current.undo();
+      return;
+    }
     let target: EditorSnapshot | undefined;
     if (historyTimerRef.current && lastSnapshotRef.current) {
       clearTimeout(historyTimerRef.current);
@@ -1470,7 +1506,7 @@ function Decorate() {
             <button
               type="button"
               onClick={undo}
-              disabled={!canUndo}
+              disabled={shared.active ? !shared.canUndo : !canUndo}
               title="Undo previous action"
               className="rounded-full border border-ink/20 bg-paper px-3.5 py-2.5 font-hand text-sm text-ink transition hover:-translate-y-0.5 hover:border-ink/45 disabled:cursor-not-allowed disabled:opacity-35 sm:px-5"
             >
@@ -1479,7 +1515,12 @@ function Decorate() {
             <button
               type="button"
               onClick={() => void save()}
-              disabled={!ready || saving || borderRendering}
+              disabled={
+                !ready ||
+                saving ||
+                borderRendering ||
+                (shared.active && (!shared.synced || shared.saving))
+              }
               className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper transition hover:-translate-y-0.5 disabled:opacity-40 sm:px-7"
             >
               {saving ? "Saving…" : "Save image"}
@@ -1488,20 +1529,77 @@ function Decorate() {
         </div>
       </header>
 
+      {shared.active && (
+        <div className="shared-editor-bar">
+          <label>
+            Your cursor name{" "}
+            <input
+              aria-label="Your cursor name"
+              placeholder="Your name"
+              value={nickname}
+              maxLength={32}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[<>\p{Cc}\p{Cf}]/gu, "");
+                setNickname(value);
+                shared.client?.setName(value);
+              }}
+            />
+          </label>
+          <span role="status">
+            {shared.saveError ||
+              shared.error ||
+              (!shared.synced
+                ? "Connecting…"
+                : shared.saving
+                  ? "Saving our changes…"
+                  : shared.client?.online && shared.client.other?.stage === "decorate"
+                    ? `${shared.client.other.name} is here · changes saved`
+                    : "Changes saved · your person can join anytime")}
+          </span>
+          <a className="underline" href={getTogetherLink() || "/"}>
+            Our booth & invite
+          </a>
+        </div>
+      )}
       <div className="mx-auto grid max-w-[1500px] gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(460px,520px)] lg:gap-5 lg:px-7 lg:py-4">
         <section className="flex min-h-[62dvh] items-center justify-center rounded-[28px] border border-ink/10 bg-[#e8e0d3] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.8)] sm:p-8 lg:sticky lg:top-24 lg:h-[calc(100dvh-8rem)]">
           {ready ? (
             <div className="flex max-h-full max-w-full flex-col items-center gap-3">
-              <canvas
-                ref={canvasRef}
-                aria-label="Decorated photo composition preview"
-                onPointerDown={onCanvasPointerDown}
-                onPointerMove={onCanvasPointerMove}
-                onPointerUp={endCanvasInteraction}
-                onPointerCancel={endCanvasInteraction}
-                className={`max-h-[calc(100dvh-12rem)] max-w-full touch-none rounded-[3px] shadow-[0_24px_70px_-25px_rgba(40,28,20,.55)] ${layout === "prints" || decorations.includes("referenceStars") || decorations.includes("bedazzle") ? "cursor-grab active:cursor-grabbing" : ""}`}
-                style={{ aspectRatio: `${format.width}/${format.height}` }}
-              />
+              <div className="relative flex min-h-0 max-h-full max-w-full">
+                <canvas
+                  ref={canvasRef}
+                  aria-label="Decorated photo composition preview"
+                  onPointerDown={onCanvasPointerDown}
+                  onPointerMove={(event) => {
+                    onCanvasPointerMove(event);
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    shared.client?.cursor({
+                      x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+                      y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)),
+                    });
+                  }}
+                  onPointerLeave={() => shared.client?.cursor(null)}
+                  onPointerUp={endCanvasInteraction}
+                  onPointerCancel={endCanvasInteraction}
+                  className={`max-h-[calc(100dvh-12rem)] max-w-full touch-none rounded-[3px] shadow-[0_24px_70px_-25px_rgba(40,28,20,.55)] ${layout === "prints" || decorations.includes("referenceStars") || decorations.includes("bedazzle") ? "cursor-grab active:cursor-grabbing" : ""}`}
+                  style={{ aspectRatio: `${format.width}/${format.height}` }}
+                />
+                {shared.client?.online &&
+                  shared.client.other?.stage === "decorate" &&
+                  (shared.remoteCursor || shared.client.other.cursor) &&
+                  (() => {
+                    const cursor = shared.remoteCursor || shared.client!.other!.cursor!;
+                    return (
+                      <div
+                        data-testid="partner-cursor"
+                        className="partner-cursor"
+                        style={{ left: `${cursor.x * 100}%`, top: `${cursor.y * 100}%` }}
+                      >
+                        ↖<span>{shared.client!.other!.name}</span>
+                      </div>
+                    );
+                  })()}
+              </div>
               {(decorations.includes("referenceStars") ||
                 decorations.includes("bedazzle") ||
                 layout === "prints") && (
@@ -1517,7 +1615,10 @@ function Decorate() {
           )}
         </section>
 
-        <aside className="space-y-3 pb-10 lg:grid lg:grid-cols-2 lg:content-start lg:gap-2 lg:space-y-0 lg:pb-0">
+        <aside
+          inert={shared.active && !shared.synced}
+          className="space-y-3 pb-10 lg:grid lg:grid-cols-2 lg:content-start lg:gap-2 lg:space-y-0 lg:pb-0"
+        >
           <EditorSection number="01" title="Choose the canvas">
             <div className="grid grid-cols-2 gap-2">
               {FORMATS.map((item) => (
@@ -1538,6 +1639,7 @@ function Decorate() {
                 <button
                   key={item.id}
                   type="button"
+                  aria-pressed={layout === item.id}
                   onClick={() => {
                     setLayout(item.id);
                     setSelectedPrintId(
@@ -1657,6 +1759,7 @@ function Decorate() {
                 <button
                   key={item.id}
                   type="button"
+                  aria-pressed={effect === item.id}
                   onClick={() => setEffect(item.id)}
                   className={`font-hand rounded-full border px-3.5 py-1.5 text-base transition ${effect === item.id ? "border-rust bg-rust text-paper" : "border-ink/20 bg-white/45 hover:border-ink/50"}`}
                 >
@@ -1759,7 +1862,12 @@ function Decorate() {
           <button
             type="button"
             onClick={() => void save()}
-            disabled={!ready || saving || borderRendering}
+            disabled={
+              !ready ||
+              saving ||
+              borderRendering ||
+              (shared.active && (!shared.synced || shared.saving))
+            }
             className="w-full rounded-2xl bg-ink px-6 py-3 text-base font-semibold text-paper shadow-[0_12px_30px_-16px_rgba(42,36,30,.7)] transition hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 lg:col-span-2"
           >
             {saving ? "Saving…" : "Save image"}

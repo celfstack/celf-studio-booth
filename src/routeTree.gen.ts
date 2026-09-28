@@ -19,6 +19,7 @@ import { Route as ApiTogetherRouteImport } from './routes/api.together'
 import { Route as TogetherIndexRouteImport } from './routes/together.index'
 import { Route as TogetherRoomIdRouteImport } from './routes/together.$roomId'
 import { Route as ApiTogetherRoomIdRouteImport } from './routes/api.together.$roomId'
+import { Route as ApiTogetherRoomIdSyncRouteImport } from './routes/api.together.$roomId.sync'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,11 @@ const ApiTogetherRoomIdRoute = ApiTogetherRoomIdRouteImport.update({
   path: '/$roomId',
   getParentRoute: () => ApiTogetherRoute,
 } as any)
+const ApiTogetherRoomIdSyncRoute = ApiTogetherRoomIdSyncRouteImport.update({
+  id: '/sync',
+  path: '/sync',
+  getParentRoute: () => ApiTogetherRoomIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,7 +87,8 @@ export interface FileRoutesByFullPath {
   '/api/together': typeof ApiTogetherRouteWithChildren
   '/together/$roomId': typeof TogetherRoomIdRoute
   '/together/': typeof TogetherIndexRoute
-  '/api/together/$roomId': typeof ApiTogetherRoomIdRoute
+  '/api/together/$roomId': typeof ApiTogetherRoomIdRouteWithChildren
+  '/api/together/$roomId/sync': typeof ApiTogetherRoomIdSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,7 +100,8 @@ export interface FileRoutesByTo {
   '/api/together': typeof ApiTogetherRouteWithChildren
   '/together/$roomId': typeof TogetherRoomIdRoute
   '/together': typeof TogetherIndexRoute
-  '/api/together/$roomId': typeof ApiTogetherRoomIdRoute
+  '/api/together/$roomId': typeof ApiTogetherRoomIdRouteWithChildren
+  '/api/together/$roomId/sync': typeof ApiTogetherRoomIdSyncRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,7 +114,8 @@ export interface FileRoutesById {
   '/api/together': typeof ApiTogetherRouteWithChildren
   '/together/$roomId': typeof TogetherRoomIdRoute
   '/together/': typeof TogetherIndexRoute
-  '/api/together/$roomId': typeof ApiTogetherRoomIdRoute
+  '/api/together/$roomId': typeof ApiTogetherRoomIdRouteWithChildren
+  '/api/together/$roomId/sync': typeof ApiTogetherRoomIdSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/together/$roomId'
     | '/together/'
     | '/api/together/$roomId'
+    | '/api/together/$roomId/sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/together/$roomId'
     | '/together'
     | '/api/together/$roomId'
+    | '/api/together/$roomId/sync'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/together/$roomId'
     | '/together/'
     | '/api/together/$roomId'
+    | '/api/together/$roomId/sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -231,15 +243,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTogetherRoomIdRouteImport
       parentRoute: typeof ApiTogetherRoute
     }
+    '/api/together/$roomId/sync': {
+      id: '/api/together/$roomId/sync'
+      path: '/sync'
+      fullPath: '/api/together/$roomId/sync'
+      preLoaderRoute: typeof ApiTogetherRoomIdSyncRouteImport
+      parentRoute: typeof ApiTogetherRoomIdRoute
+    }
   }
 }
 
+interface ApiTogetherRoomIdRouteChildren {
+  ApiTogetherRoomIdSyncRoute: typeof ApiTogetherRoomIdSyncRoute
+}
+
+const ApiTogetherRoomIdRouteChildren: ApiTogetherRoomIdRouteChildren = {
+  ApiTogetherRoomIdSyncRoute: ApiTogetherRoomIdSyncRoute,
+}
+
+const ApiTogetherRoomIdRouteWithChildren =
+  ApiTogetherRoomIdRoute._addFileChildren(ApiTogetherRoomIdRouteChildren)
+
 interface ApiTogetherRouteChildren {
-  ApiTogetherRoomIdRoute: typeof ApiTogetherRoomIdRoute
+  ApiTogetherRoomIdRoute: typeof ApiTogetherRoomIdRouteWithChildren
 }
 
 const ApiTogetherRouteChildren: ApiTogetherRouteChildren = {
-  ApiTogetherRoomIdRoute: ApiTogetherRoomIdRoute,
+  ApiTogetherRoomIdRoute: ApiTogetherRoomIdRouteWithChildren,
 }
 
 const ApiTogetherRouteWithChildren = ApiTogetherRoute._addFileChildren(

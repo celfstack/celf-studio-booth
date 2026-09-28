@@ -33,7 +33,6 @@ test("two people publish independently; a shared link never grants host overwrit
   const guest = (await readRoom(id, guestToken)) as RoomView;
   assert.equal(guest.role, "guest");
   assert.equal(guest.inviteToken, undefined);
-  await assert.rejects(submitPhotos(id, guestToken, data("Robin")), { status: 409 });
   const hostData = data("Celina");
   await submitPhotos(id, token, hostData);
   await submitPhotos(id, token, hostData); // idempotent retry
@@ -123,6 +122,45 @@ test("creation has a fixed-window rate limit", async () => {
   const ip = randomUUID();
   for (let i = 0; i < 10; i++) await createRoom({ name: "Test" }, ip);
   await assert.rejects(createRoom({ name: "Test" }, ip), { status: 429 });
+});
+test("guest may finish before the host; shared state merges independent changes and enforces readiness", async () => {
+  const { syncRoom } = await import("../src/lib/together/live.server");
+  const { id, token } = await createRoom({}, randomUUID());
+  const guest = ((await readRoom(id, token)) as RoomView).inviteToken!;
+  await submitPhotos(id, guest, data("Robin"));
+  assert.equal(((await readRoom(id, token)) as RoomView).guest?.name, "Robin");
+  await assert.rejects(syncRoom(id, token, { start: true }), { status: 409 });
+  await assert.rejects(
+    syncRoom(id, guest, { signal: { generation: "bad", type: "offer", sdp: "bad" } }),
+    { status: 403 },
+  );
+  await assert.rejects(syncRoom(id, token, { editor: { __proto__: "bad", effect: "invalid" } }), {
+    status: 400,
+  });
+  const presence = {
+    instance: randomUUID(),
+    name: "A",
+    camera: true,
+    ready: true,
+    connected: true,
+    stage: "booth",
+    cursor: null,
+  };
+  await syncRoom(id, token, { presence });
+  await syncRoom(id, guest, { presence: { ...presence, instance: randomUUID() } });
+  const [a, b] = await Promise.all([
+    syncRoom(id, token, { start: true, editor: { effect: "dreamy" } }),
+    syncRoom(id, guest, { start: true, editor: { backdrop: "satin" } }),
+  ]);
+  assert.equal(a.state.capture.id, b.state.capture.id);
+  const state = (await syncRoom(id, guest, {})).state;
+  assert.equal(state.editor.effect, "dreamy");
+  assert.equal(state.editor.backdrop, "satin");
+  assert.ok(state.capture.startAt > Date.now() + 3000);
+  assert.equal((await syncRoom(id, guest, { cancel: true })).state.capture.cancelled, true);
+  await removeRoom(id, token);
+  assert.equal(await getValue(`celf:together:${id}:shared`), null);
+  await assert.rejects(syncRoom(id, guest, { editor: { effect: "dreamy" } }), { status: 410 });
 });
 test("production never falls back to local storage", async () => {
   process.env.NODE_ENV = "production";

@@ -541,3 +541,115 @@
 .booth-mode-picker > span { background:var(--color-ink); color:var(--color-paper); }
 .booth-mode-picker > a { color:var(--color-rust); transition:background .2s; }
 .booth-mode-picker > a:hover { background:#a03d2e0a; }
+
+.booth-mode-picker button {
+  padding: 0.55rem 1.15rem;
+  border-radius: 999px;
+  color: var(--color-ink-soft);
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.booth-mode-picker button[aria-pressed="true"] {
+  background: #a03d2e;
+  color: #faf6ef;
+}
+.booth-mode-picker button:focus-visible {
+  outline: 2px solid #a03d2e;
+  outline-offset: 3px;
+}
+.together-room-toolbar {
+  max-width: 640px;
+  margin: 0 auto 30px;
+  padding: 16px 20px;
+  border: 1px solid #2a241e25;
+  border-radius: 18px;
+  background: #fff9;
+  text-align: left;
+}
+.together-room-people {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+.together-room-people label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.together-room-people label span {
+  opacity: 0.6;
+}
+.together-room-people input {
+  width: 120px;
+  border-bottom: 1px solid #2a241e40;
+  padding: 4px;
+}
+.shared-editor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #f9eee3;
+  border-bottom: 1px solid #2a241e20;
+  font-size: 13px;
+}
+.shared-editor-bar input {
+  width: 110px;
+  border-bottom: 1px solid #a03d2e60;
+  padding: 3px;
+}
+.partner-cursor {
+  pointer-events: none;
+  position: absolute;
+  z-index: 10;
+  color: #a03d2e;
+  font-size: 20px;
+  transform: translate(-3px, -3px);
+}
+.partner-cursor span {
+  display: block;
+  background: #a03d2e;
+  color: #fff;
+  border-radius: 9px;
+  padding: 3px 8px;
+  font:
+    12px Arial,
+    sans-serif;
+  white-space: nowrap;
+  margin-left: 10px;
+}
+@media (max-width: 480px) {
+  .together-room-toolbar {
+    padding: 12px;
+  }
+  .together-room-people {
+    align-items: flex-start;
+  }
+  .together-room-people > span {
+    max-width: 110px;
+  }
+  .together-link-field {
+    flex-wrap: wrap;
+  }
+  .together-link-field input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+/* Keep the shared camera central, like the original solo booth. */
+.together-nav { min-height:64px; }
+.together-room { margin:20px auto; }
+.together-progress { margin-bottom:16px; }
+.together-room-toolbar { margin-bottom:18px; padding:12px 16px; }
+.together-room-toolbar .together-fine { margin-top:8px; }
+.together-room h1 { font-size:clamp(28px,3vw,36px); }
+.together-room .together-eyebrow { display:none; }
+.together-room-lede { font-size:16px; margin:8px auto 14px; max-width:600px; }
+.together-camera { margin-top:16px; width:min(100%,560px); }

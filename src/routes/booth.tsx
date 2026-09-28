@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { decodePhoto, isSupportedPhotoFile, makeThumbnail } from "../lib/strip/render";
-import { setSessionPhotos } from "../lib/strip/session";
+import { resetSession, setSessionPhotos } from "../lib/strip/session";
 
 export const Route = createFileRoute("/booth")({
   component: Booth,
@@ -37,6 +37,7 @@ function Booth() {
 
   // Start the camera and open the curtain on mount.
   useEffect(() => {
+    resetSession();
     let cancelled = false;
     void (async () => {
       try {

@@ -8,6 +8,7 @@ import {
   roomApi,
   roomLink,
 } from "../lib/together/client";
+import { useLiveRoom, type LiveRoomHook } from "../lib/together/live";
 import type { RoomPhotos, RoomView } from "../lib/together/types";
 import { decodePhoto, isSupportedPhotoFile } from "../lib/strip/render";
 import { resetSession, setSessionPhotos, setTogetherLink } from "../lib/strip/session";
@@ -107,6 +108,12 @@ function SharedBooth() {
     };
   }, [roomId, token, retry]);
 
+  const live = useLiveRoom(room && token ? { id: roomId, token, role: room.role } : null);
+  const [nickname, setNickname] = useState("");
+  useEffect(() => {
+    if (live.client) setNickname(live.client.presence.name);
+  }, [live.client]);
+
   async function copy(value: string, kind: string) {
     try {
       await navigator.clipboard.writeText(value);
@@ -158,7 +165,7 @@ function SharedBooth() {
   }
   const complete = Boolean(room?.host && room.guest);
   const submitted = room ? Boolean(room[room.role]) : false;
-  const canCapture = room && !submitted && (room.role === "host" || Boolean(room.host));
+  const canCapture = room && !submitted;
   const invite = room?.inviteToken ? roomLink(roomId, "guest", room.inviteToken) : "";
   const ownLink = room ? roomLink(roomId, room.role, token) : "";
 
@@ -173,7 +180,7 @@ function SharedBooth() {
       <section className="together-room">
         <nav aria-label="Booth progress" className="together-progress">
           <span aria-current={!submitted ? "step" : undefined}>01 · your photos</span>
-          <span aria-current={submitted && !complete ? "step" : undefined}>02 · their turn</span>
+          <span aria-current={submitted && !complete ? "step" : undefined}>02 · together</span>
           <span aria-current={complete ? "step" : undefined}>03 · our strip</span>
         </nav>
         {loading && <p role="status">Opening your little booth…</p>}
@@ -192,12 +199,67 @@ function SharedBooth() {
             Make a new booth →
           </Link>
         )}
+        {room && (
+          <div className="together-room-toolbar">
+            <div className="together-room-people">
+              <label>
+                Your name <span>(optional)</span>
+                <input
+                  aria-label="Your name (optional)"
+                  maxLength={32}
+                  value={nickname}
+                  placeholder={room.role === "host" ? "Person 1" : "Person 2"}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[<>\p{Cc}\p{Cf}]/gu, "");
+                    setNickname(value);
+                    live.client?.setName(value);
+                  }}
+                />
+              </label>
+              <span role="status">
+                {live.connected
+                  ? "● Together live"
+                  : live.client?.online
+                    ? "Connecting you…"
+                    : "A spot saved for your person"}
+              </span>
+            </div>
+            {invite && (
+              <div className="together-link-field">
+                <input
+                  aria-label="Invitation link"
+                  value={invite}
+                  readOnly
+                  onFocus={(e) => e.target.select()}
+                />
+                <button className="together-primary" onClick={() => void copy(invite, "invite")}>
+                  {copied === "invite" ? "Copied ✓" : "Copy invite"}
+                </button>
+              </div>
+            )}
+            <p className="together-fine">
+              {localPreview
+                ? "Local preview: this invite works on this computer. Publishing enables other devices."
+                : "Send the invite to join live, or leave your photos here for later."}
+            </p>
+            {live.error && (
+              <p role="alert" className="together-error">
+                {live.error}{" "}
+                <button className="underline" onClick={() => live.client?.restart()}>
+                  Retry live
+                </button>
+              </p>
+            )}
+          </div>
+        )}
         {canCapture && (
           <Capture
             key={room.role}
             room={room}
             token={token}
-            partnerPhotos={photos.host}
+            partnerPhotos={room.role === "host" ? photos.guest : photos.host}
+            live={live}
+            name={nickname}
             onShared={(next) => {
               setRoom(next);
               setRetry((v) => v + 1);
@@ -207,43 +269,13 @@ function SharedBooth() {
         {room && !canCapture && !complete && (
           <>
             <p className="together-eyebrow">a little note from far away</p>
-            <h1>
-              {room.role === "host"
-                ? "Your half is here. Their turn next."
-                : `${room.name} is getting ready.`}
-            </h1>
+            <h1>Your half is here. Their turn next.</h1>
             <p className="together-room-lede">
               {room.role === "host"
                 ? "Send them this invitation. They’ll see your poses and make the other half, whenever they’re ready."
                 : "Their photos will appear here when they’re ready to share. You can leave this page and return with the same link."}
             </p>
             <MiniStrip photos={photos} />
-            {invite && (
-              <div className="together-share-card">
-                <label htmlFor="invite-link">A little invitation for your person</label>
-                <div className="together-link-field">
-                  <input
-                    id="invite-link"
-                    value={invite}
-                    readOnly
-                    onFocus={(e) => e.target.select()}
-                  />
-                  <button className="together-primary" onClick={() => void copy(invite, "invite")}>
-                    {copied === "invite" ? "Copied ✓" : "Copy invite"}
-                  </button>
-                </div>
-                <p className="together-fine">
-                  Anyone with this invitation can see your shared photos and fill the other side.
-                  Send it to your person.
-                </p>
-                {localPreview && (
-                  <p className="together-fine">
-                    Local preview: this link only works on this computer. Online invitations will
-                    work after publishing.
-                  </p>
-                )}
-              </div>
-            )}
             <p className="together-status">
               {room.role === "host" ? "Waiting for your person" : "Waiting for their photos"}
             </p>
@@ -277,7 +309,7 @@ function SharedBooth() {
             <p className="together-fine center">
               Then decorate with all your usual filters, backgrounds, stars & gems.
               <br />
-              You each get your own version to decorate and download.
+              Decorate the same strip together, then save it on both devices.
             </p>
           </>
         )}
@@ -366,14 +398,21 @@ function Capture({
   room,
   token,
   partnerPhotos,
+  live,
+  name,
   onShared,
 }: {
   room: RoomView;
   token: string;
   partnerPhotos: string[];
+  live: LiveRoomHook;
+  name: string;
   onShared: (room: RoomView) => void;
 }) {
-  const [name, setName] = useState(room.role === "host" ? room.name : "");
+  const liveRef = useRef(live);
+  liveRef.current = live;
+  const seenCapture = useRef("");
+  const activeCapture = useRef(false);
   const [shots, setShots] = useState<string[]>([]);
   const [selected, setSelected] = useState(0);
   const [cameraOn, setCameraOn] = useState(false);
@@ -394,6 +433,7 @@ function Capture({
     openingRun.current++;
     stream.current?.getTracks().forEach((track) => track.stop());
     stream.current = null;
+    liveRef.current.client?.setCamera(null);
     setCameraOn(false);
     setOpening(false);
   }, []);
@@ -406,6 +446,7 @@ function Capture({
     alive.current = true;
     const visibility = () => {
       if (document.hidden) {
+        liveRef.current.client?.cancel();
         cancel();
         stopCamera();
       }
@@ -455,7 +496,9 @@ function Capture({
         return;
       }
       stream.current = media;
+      liveRef.current.client?.setCamera(media);
       media.getVideoTracks()[0].onended = () => {
+        liveRef.current.client?.cancel();
         cancel();
         stopCamera();
         setError(
@@ -476,20 +519,28 @@ function Capture({
       if (alive.current && current === openingRun.current) setOpening(false);
     }
   }
-  async function capture() {
+  async function capture(startAt?: number) {
     if (shooting || !video.current || !cameraOn) return;
     const generation = ++run.current;
-    const indices = complete ? [selected] : [0, 1, 2, 3].filter((i) => !shots[i]);
+    const indices = startAt
+      ? [0, 1, 2, 3]
+      : complete
+        ? [selected]
+        : [0, 1, 2, 3].filter((i) => !shots[i]);
+    activeCapture.current = Boolean(startAt);
     setShooting(true);
     setError("");
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     try {
       for (const index of indices) {
         setSelected(index);
-        for (let number = 3; number > 0; number--) {
+        const deadline = startAt ? startAt + index * 3700 : Date.now() + 3000;
+        while (Date.now() + (startAt ? liveRef.current.client?.offset || 0 : 0) < deadline) {
           if (!alive.current || generation !== run.current) return;
-          setCount(number);
-          await sleep(1000);
+          const remaining =
+            deadline - Date.now() - (startAt ? liveRef.current.client?.offset || 0 : 0);
+          setCount(Math.min(3, Math.max(1, Math.ceil(remaining / 1000))));
+          await sleep(Math.min(80, remaining));
         }
         if (!alive.current || generation !== run.current || document.hidden) return;
         const photo = encodeHalf(video.current!, true);
@@ -507,6 +558,7 @@ function Capture({
       setError(e instanceof Error ? e.message : "That shot didn’t work. Please try again.");
     } finally {
       if (alive.current && generation === run.current) {
+        activeCapture.current = false;
         setShooting(false);
         setCount(null);
       }
@@ -553,7 +605,7 @@ function Capture({
     stopCamera();
     try {
       const result = await roomApi<RoomView>(`/${room.id}`, token, "POST", {
-        name,
+        name: name.trim() || (room.role === "host" ? "Person 1" : "Person 2"),
         photos: shots,
         submissionId: submissionId.current,
       });
@@ -565,6 +617,48 @@ function Capture({
       if (alive.current) setBusy(false);
     }
   }
+  const captureRef = useRef(capture);
+  captureRef.current = capture;
+  useEffect(() => {
+    const plan = live.state.capture;
+    if (plan?.cancelled || (activeCapture.current && !live.connected)) {
+      if (activeCapture.current) cancel();
+      activeCapture.current = false;
+      return;
+    }
+    if (!plan || plan.id === seenCapture.current) return;
+    seenCapture.current = plan.id;
+    const now = Date.now() + (live.client?.offset || 0);
+    if (plan.startAt < now - 750) {
+      if (cameraOn && plan.startAt > now - 18000) {
+        setError("We missed the shared countdown. Get ready again to retry together.");
+        live.client?.cancel();
+      }
+      return;
+    }
+    if (!cameraOn) return;
+    void captureRef.current(plan.startAt);
+  }, [live.state.capture, live.connected, live.client, cameraOn, cancel]);
+  const remoteVideo = useRef<HTMLVideoElement>(null);
+  const remoteCamera =
+    live.connected && live.client?.online && live.client.other?.camera && live.remoteStream;
+  useEffect(() => {
+    if (remoteVideo.current && live.remoteStream) {
+      remoteVideo.current.srcObject = live.remoteStream;
+      void remoteVideo.current.play().catch(() => {});
+    }
+  }, [live.remoteStream, remoteCamera]);
+  const ready = Boolean(live.state[room.role]?.ready);
+  const bothReady =
+    ready &&
+    live.connected &&
+    Boolean(
+      live.state[room.role]?.connected &&
+      live.client?.online &&
+      live.client.other?.connected &&
+      live.client.other.ready &&
+      live.client.other.camera,
+    );
   const ownHalf = (
     <div className="together-half" key="you">
       {cameraOn ? (
@@ -586,7 +680,15 @@ function Capture({
   );
   const otherHalf = (
     <div className="together-half" key="them">
-      {room.role === "guest" && partnerPhotos[selected] ? (
+      {remoteCamera ? (
+        <video
+          ref={remoteVideo}
+          autoPlay
+          muted
+          playsInline
+          aria-label="Your person’s live camera"
+        />
+      ) : partnerPhotos[selected] ? (
         <img
           src={partnerPhotos[selected]}
           alt={`${room.host?.name || room.name}'s matching pose ${selected + 1}`}
@@ -598,49 +700,19 @@ function Capture({
           for your person
         </div>
       )}
-      <span className="together-half-label">
-        {room.role === "guest" ? room.host?.name || room.name : "your person"}
-      </span>
+      <span className="together-half-label">{live.client?.other?.name || "your person"}</span>
     </div>
   );
 
   return (
     <>
-      <p className="together-eyebrow">
-        {room.role === "guest"
-          ? `a little invitation from ${room.host?.name || room.name}`
-          : "you go first"}
-      </p>
-      <h1>
-        {complete && !cameraOn
-          ? "Four little moments. All you."
-          : room.role === "host"
-            ? "Leave a little room for them."
-            : "They saved a place for you."}
-      </h1>
+      <p className="together-eyebrow">two places. one little booth.</p>
+      <h1>{complete && !cameraOn ? "Your four little moments." : "Closer, wherever you are."}</h1>
       <p className="together-room-lede">
         {complete && !cameraOn
-          ? "Choose a photo to check it or retake it. Nothing is shared until you’re happy with all four."
-          : room.role === "host"
-            ? "You’re on the left. They’ll be on the right. Strike four poses they can join from wherever they are."
-            : "You’re on the right. Their saved poses are beside you—match a heart, share a kiss, or just be yourselves."}
+          ? "Review your photos, retake any pose, then save your half."
+          : "Open your cameras, get ready, and pose together. Or take your half now and let them join later."}
       </p>
-      {room.role === "guest" && (
-        <div className="mx-auto max-w-xs text-left">
-          <label className="mb-2 block text-sm" htmlFor="guest-name">
-            Your first name or nickname
-          </label>
-          <input
-            className="together-name-input"
-            id="guest-name"
-            autoComplete="given-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={32}
-            placeholder="Your name"
-          />
-        </div>
-      )}
       <div className="together-camera">
         {room.role === "host" ? [ownHalf, otherHalf] : [otherHalf, ownHalf]}
       </div>
@@ -676,12 +748,40 @@ function Capture({
       )}
       <div className="together-actions">
         {shooting ? (
-          <button className="together-secondary" onClick={cancel}>
+          <button
+            className="together-secondary"
+            onClick={() => {
+              live.client?.cancel();
+              cancel();
+            }}
+          >
             Cancel countdown
           </button>
         ) : cameraOn ? (
           <>
-            <button className="together-primary" disabled={busy} onClick={() => void capture()}>
+            {live.connected && (
+              <>
+                <button
+                  className="together-secondary"
+                  aria-pressed={ready}
+                  onClick={() => live.client?.setReady(!ready)}
+                >
+                  {ready ? "Ready ✓" : "I'm ready"}
+                </button>
+                <button
+                  className="together-primary"
+                  disabled={!bothReady || busy}
+                  onClick={() => void live.client?.capture().catch((e) => setError(e.message))}
+                >
+                  Start together
+                </button>
+              </>
+            )}
+            <button
+              className={live.connected ? "together-secondary" : "together-primary"}
+              disabled={busy}
+              onClick={() => void capture()}
+            >
               {complete
                 ? `Retake photo ${selected + 1}`
                 : shots.some(Boolean)
@@ -706,16 +806,12 @@ function Capture({
           </button>
         )}
         {complete && !cameraOn && (
-          <button
-            className="together-primary"
-            disabled={busy || !name.trim()}
-            onClick={() => void submit()}
-          >
+          <button className="together-primary" disabled={busy} onClick={() => void submit()}>
             {busy
               ? "Sharing your photos…"
               : room.role === "host"
-                ? "Happy with these · make my invite →"
-                : "Happy with these · join our strip →"}
+                ? "Save my half →"
+                : "Save my half →"}
           </button>
         )}
       </div>
@@ -743,7 +839,7 @@ function Capture({
       <p className="together-fine center">
         {complete
           ? "Sharing saves these four photos to your private booth for 7 days. Your person can see and download them. Once shared, this side is final."
-          : "Your camera stays on your device. Review your photos before choosing to share them. You can retake any shot."}
+          : "When your camera is on, your person can see you live. Audio is off. Review each photo before saving your half."}
       </p>
     </>
   );

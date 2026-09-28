@@ -72,7 +72,7 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   return parsed.data;
 }
 export async function createRoom(input: unknown, ip: string) {
-  const { name } = parse(z.object({ name: nameSchema }), input);
+  const { name } = parse(z.object({ name: nameSchema.default("Our booth") }), input);
   if ((await incrementWindow(`celf:together:rate:create:${hash(ip)}`, 3600)) > 10)
     throw new RoomError(429, "A few too many booths. Please try again in an hour.");
   const id = randomBytes(16).toString("hex");
@@ -109,7 +109,7 @@ export async function authorize(
       ? "guest"
       : null;
   if (!role) throw new RoomError(403, "This invitation is incomplete. Ask for the full link.");
-  if ((await incrementWindow(`celf:together:rate:read:${id}:${role}`, 60)) > 120)
+  if ((await incrementWindow(`celf:together:rate:read:${id}:${role}`, 60)) > 360)
     throw new RoomError(429, "Give the booth a moment, then try again.");
   return { room, role };
 }
@@ -159,6 +159,7 @@ export async function removeRoom(id: string, token: string) {
     key(id, "guest"),
     key(id, "host:meta"),
     key(id, "guest:meta"),
+    key(id, "shared"),
   ]);
   return { deleted: true };
 }

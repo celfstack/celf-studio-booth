@@ -1,4 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { roomApi, rememberRoom, recentRoom } from "../lib/together/client";
 import { resetSession } from "../lib/strip/session";
 
 export const Route = createFileRoute("/")({
@@ -95,9 +97,38 @@ const HOME_STARS = [
 function Home() {
   const navigate = useNavigate();
 
-  const enterBooth = () => {
+  const [mode, setMode] = useState<"solo" | "together">("solo");
+  const [hydrated, setHydrated] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [returnLink, setReturnLink] = useState<string | null>(null);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("mode") === "together") setMode("together");
+    setReturnLink(recentRoom());
+    setHydrated(true);
+  }, []);
+  const enterBooth = async () => {
+    if (busy) return;
     resetSession();
-    void navigate({ to: "/booth" });
+    if (mode === "solo") {
+      void navigate({ to: "/booth" });
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const room = await roomApi<{ id: string; token: string }>("", "", "POST", {});
+      rememberRoom(room.id, room.token, "host");
+      await navigate({
+        to: "/together/$roomId",
+        params: { roomId: room.id },
+        hash: `host=${room.token}`,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not open your booth. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -136,15 +167,45 @@ function Home() {
             a little photo booth, just for you
           </p>
           <nav className="booth-mode-picker" aria-label="Choose your booth">
-            <span aria-current="page">Just me</span>
-            <a href="/together">Together, anywhere <span aria-hidden="true">♡</span></a>
+            <button
+              type="button"
+              disabled={!hydrated || busy}
+              aria-pressed={mode === "solo"}
+              onClick={() => setMode("solo")}
+            >
+              Just me
+            </button>
+            <button
+              type="button"
+              disabled={!hydrated || busy}
+              aria-pressed={mode === "together"}
+              onClick={() => setMode("together")}
+            >
+              Together ♡
+            </button>
           </nav>
+          <p className="mt-3 text-sm text-ink-soft" aria-live="polite">
+            {mode === "together"
+              ? "Two places, one photo strip. Live or in your own time."
+              : "Four poses. A little moment for you."}
+          </p>
+          {error && (
+            <p role="alert" className="together-error">
+              {error}
+            </p>
+          )}
+          {mode === "together" && returnLink && (
+            <a className="together-text-link" href={returnLink}>
+              Return to our booth →
+            </a>
+          )}
         </header>
 
         <button
           type="button"
-          onClick={enterBooth}
-          aria-label="Click to step into the Celf Studio photo booth"
+          onClick={() => void enterBooth()}
+          disabled={busy || !hydrated}
+          aria-label="Enter Photo Booth"
           className="group mt-8 w-full max-w-[32rem] outline-offset-8 transition-transform duration-300 hover:scale-[1.012] focus-visible:outline-2 focus-visible:outline-rust active:scale-[.995] sm:mt-10"
         >
           <span className="home-print-stage block w-full overflow-hidden" aria-hidden="true">
@@ -189,12 +250,10 @@ function Home() {
             </span>
           </span>
           <span className="font-hand mt-2 block text-xl text-ink-soft transition-colors group-hover:text-rust sm:text-2xl">
-            click to step in →
+            {busy ? "opening your booth…" : "Enter Photo Booth →"}
           </span>
         </button>
       </div>
-
-
 
       <p className="font-type mt-6 text-center text-[10px] tracking-[.08em] text-ink-soft sm:text-xs">
         made with {"<3"} by{" "}

@@ -1,3 +1,4 @@
+import { SharedSessionBoundary } from "../lib/together/session-boundary";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { saveImageBlob } from "../lib/download";
@@ -11,7 +12,11 @@ import {
 } from "../lib/strip/session";
 
 export const Route = createFileRoute("/print")({
-  component: Print,
+  component: () => (
+    <SharedSessionBoundary>
+      <Print />
+    </SharedSessionBoundary>
+  ),
 });
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -123,7 +128,10 @@ function Print() {
 
   const onTakeAnother = useCallback(() => {
     const together = getTogetherLink();
-    if (together) { window.location.assign(together); return; }
+    if (together) {
+      window.location.assign(together);
+      return;
+    }
     resetSession();
     void navigate({ to: "/booth" });
   }, [navigate]);

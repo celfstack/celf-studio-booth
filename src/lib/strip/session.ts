@@ -35,9 +35,19 @@ export function getSessionStrip(): StripResult | null {
 
 export function setTogetherLink(link: string) {
   session.togetherLink = link;
+  try {
+    sessionStorage.setItem("celf-active-together", link);
+  } catch {
+    /* optional */
+  }
 }
 export function getTogetherLink() {
-  return session.togetherLink;
+  if (session.togetherLink) return session.togetherLink;
+  try {
+    return sessionStorage.getItem("celf-active-together");
+  } catch {
+    return null;
+  }
 }
 
 export function resetSession() {
@@ -45,4 +55,9 @@ export function resetSession() {
   session.photos = [];
   session.strip = null;
   session.togetherLink = null;
+  try {
+    sessionStorage.removeItem("celf-active-together");
+  } catch {
+    /* optional */
+  }
 }
