@@ -1,3 +1,4 @@
+import { roomManagementLink } from "../lib/together/client";
 import { SharedSessionBoundary } from "../lib/together/session-boundary";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
@@ -129,7 +130,7 @@ function Print() {
   const onTakeAnother = useCallback(() => {
     const together = getTogetherLink();
     if (together) {
-      window.location.assign(together);
+      window.location.assign(roomManagementLink(together));
       return;
     }
     resetSession();

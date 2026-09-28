@@ -14,6 +14,9 @@ import { decodePhoto, isSupportedPhotoFile } from "../lib/strip/render";
 import { resetSession, setSessionPhotos, setTogetherLink } from "../lib/strip/session";
 
 export const Route = createFileRoute("/together/$roomId")({
+  validateSearch: (search: Record<string, unknown>): { manage?: boolean } => ({
+    manage: search.manage === true || search.manage === 1 || search.manage === "1",
+  }),
   head: () => ({
     meta: [
       { title: "Our little booth · celf studio" },
@@ -33,11 +36,13 @@ const EMPTY_PHOTOS: RoomPhotos = { host: [], guest: [] };
 
 function SharedBooth() {
   const { roomId } = Route.useParams();
+  const { manage } = Route.useSearch();
   const navigate = useNavigate();
   const [token, setToken] = useState("");
   const [room, setRoom] = useState<RoomView | null>(null);
   const [photos, setPhotos] = useState<RoomPhotos>(EMPTY_PHOTOS);
   const [error, setError] = useState("");
+  const [developError, setDevelopError] = useState("");
   const [terminal, setTerminal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -124,22 +129,39 @@ function SharedBooth() {
       setError("Copy is unavailable in this browser. Select the link above and copy it manually.");
     }
   }
-  async function openStrip() {
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      const paired = await combinePhotos(photos);
-      resetSession();
-      setSessionPhotos(paired);
-      setTogetherLink(roomLink(roomId, room!.role, token));
-      await navigate({ to: "/print" });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't develop your strip. Try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const role = room?.role;
+  const openStrip = useCallback(
+    async (isCancelled: () => boolean = () => false) => {
+      if (!role) return;
+      setBusy(true);
+      setDevelopError("");
+      try {
+        const paired = await combinePhotos(photos);
+        if (isCancelled()) return;
+        resetSession();
+        setSessionPhotos(paired);
+        setTogetherLink(roomLink(roomId, role, token));
+        await navigate({ to: "/print", replace: true });
+      } catch (e) {
+        if (!isCancelled())
+          setDevelopError(
+            e instanceof Error ? e.message : "Couldn't develop your strip. Try again.",
+          );
+      } finally {
+        if (!isCancelled()) setBusy(false);
+      }
+    },
+    [photos, roomId, role, token, navigate],
+  );
+  const complete = Boolean(room?.host && room.guest);
+  useEffect(() => {
+    if (!complete || manage || photos.host.length !== 4 || photos.guest.length !== 4) return;
+    let cancelled = false;
+    void openStrip(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
+  }, [complete, manage, photos, openStrip, retry]);
   async function remove() {
     setBusy(true);
     try {
@@ -163,11 +185,29 @@ function SharedBooth() {
       setConfirmDelete(false);
     }
   }
-  const complete = Boolean(room?.host && room.guest);
   const submitted = room ? Boolean(room[room.role]) : false;
   const canCapture = room && !submitted;
   const invite = room?.inviteToken ? roomLink(roomId, "guest", room.inviteToken) : "";
   const ownLink = room ? roomLink(roomId, room.role, token) : "";
+
+  if (complete && !manage)
+    return (
+      <main className="together-page flex min-h-dvh items-center justify-center text-center">
+        {developError || error ? (
+          <div role="alert">
+            <p>{developError || error}</p>
+            <button
+              className="together-primary mt-4"
+              onClick={() => setRetry((value) => value + 1)}
+            >
+              Try again
+            </button>
+          </div>
+        ) : (
+          <p role="status">Developing your strip…</p>
+        )}
+      </main>
+    );
 
   return (
     <main className="together-page">
@@ -286,32 +326,16 @@ function SharedBooth() {
           </>
         )}
         {room && complete && (
-          <>
-            <p className="together-eyebrow">two places. one keepsake.</p>
-            <h1>
-              {room.host!.name} & {room.guest!.name},<br />
-              together on paper.
-            </h1>
-            <p className="together-room-lede">
-              Your four little moments, side by side. Add the finishing touches or keep it just like
-              this.
-            </p>
-            <MiniStrip photos={photos} />
-            <div className="together-actions">
-              <button
-                className="together-primary"
-                onClick={() => void openStrip()}
-                disabled={busy || photos.guest.length !== 4}
-              >
-                {busy ? "Developing your strip…" : "Develop our strip →"}
-              </button>
-            </div>
-            <p className="together-fine center">
-              Then decorate with all your usual filters, backgrounds, stars & gems.
-              <br />
-              Decorate the same strip together, then save it on both devices.
-            </p>
-          </>
+          <div className="together-actions">
+            <button
+              className="together-primary"
+              disabled={busy || photos.host.length !== 4 || photos.guest.length !== 4}
+              onClick={() => void openStrip()}
+            >
+              Return to our strip →
+            </button>
+            {developError && <p role="alert">{developError}</p>}
+          </div>
         )}
         {room && (
           <details>

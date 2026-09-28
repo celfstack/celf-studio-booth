@@ -1,3 +1,4 @@
+import { roomManagementLink } from "../lib/together/client";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveImageBlob } from "../lib/download";
@@ -1556,7 +1557,7 @@ function Decorate() {
                     ? `${shared.client.other.name} is here · changes saved`
                     : "Changes saved · your person can join anytime")}
           </span>
-          <a className="underline" href={getTogetherLink() || "/"}>
+          <a className="underline" href={roomManagementLink(getTogetherLink())}>
             Our booth & invite
           </a>
         </div>

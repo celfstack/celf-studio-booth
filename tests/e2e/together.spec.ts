@@ -71,14 +71,10 @@ test("two separate browsers create, join, recover, decorate and download a share
   await guest.getByRole("button", { name: /Review photo 2/ }).click();
   await expect(guest.getByAltText("Celina's matching pose 2")).toBeVisible();
   await guest.getByRole("button", { name: /Save my half/ }).click();
-  await expect(guest.getByRole("heading", { name: /Celina & Robin/ })).toBeVisible();
-  await expect(host.getByRole("heading", { name: /Celina & Robin/ })).toBeVisible({
-    timeout: 15_000,
-  });
+  await expect(guest).toHaveURL(/\/print$/, { timeout: 15000 });
+  await expect(host).toHaveURL(/\/print$/, { timeout: 15000 });
+  await expect(guest.getByRole("button", { name: "Develop our strip →" })).toHaveCount(0);
   expect(await guest.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await guest.screenshot({ path: "test-results/together-mobile-finished.png", fullPage: true });
-  await host.getByRole("button", { name: "Develop our strip →" }).click();
-  await expect(host).toHaveURL(/\/print$/);
   const strip = host
     .getByRole("button", { name: "View your photo strip in full size" })
     .locator("img");
@@ -116,7 +112,6 @@ test("two separate browsers create, join, recover, decorate and download a share
   await expect(host.getByRole("button", { name: "Save image", exact: true }).first()).toBeEnabled({
     timeout: 30_000,
   });
-  await guest.getByRole("button", { name: "Develop our strip →" }).click();
   await guest
     .getByRole("button", { name: /Decorate/i })
     .first()
@@ -203,7 +198,10 @@ test("two separate browsers create, join, recover, decorate and download a share
   expect((await decorated).suggestedFilename()).toBe("celf-studio-decorated-portrait.png");
   await host.screenshot({ path: "test-results/together-decorated.png", fullPage: true });
   await guest.goto(invite);
-  await expect(guest.getByRole("heading", { name: /Celina & Robin/ })).toBeVisible();
+  await expect(guest).toHaveURL(/\/print$/, { timeout: 15000 });
+  await guest.getByRole("button", { name: "back to our booth", exact: true }).first().click();
+  await expect(guest).toHaveURL(/manage=(1|true)/);
+  await expect(guest.getByRole("button", { name: "Return to our strip →" })).toBeVisible();
   await guest.getByText("Your return link & privacy", { exact: true }).click();
   await guest.getByRole("button", { name: "Delete this shared booth" }).click();
   await guest.getByRole("button", { name: "Yes, delete booth" }).click();
@@ -362,12 +360,8 @@ test("live cameras, one synchronized countdown, shared cancellation, and guest-f
     await expect(page.getByRole("button", { name: /Review photo/ })).toHaveCount(4);
   await g.getByRole("button", { name: "Save my half →" }).click();
   await h.getByRole("button", { name: "Save my half →" }).click();
-  await expect(h.getByRole("button", { name: "Develop our strip →" })).toBeVisible({
-    timeout: 15000,
-  });
-  await expect(g.getByRole("button", { name: "Develop our strip →" })).toBeVisible({
-    timeout: 15000,
-  });
+  await expect(h).toHaveURL(/\/print$/, { timeout: 15000 });
+  await expect(g).toHaveURL(/\/print$/, { timeout: 15000 });
   expect(errors).toEqual([]);
   await hc.close();
   await gc.close();

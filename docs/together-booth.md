@@ -14,7 +14,11 @@ four-photo countdown. Either can cancel. Each reviews and saves their own half;
 individual retakes and uploads remain available. If someone is away, either side
 can save first and use the same invitation for the other to finish later.
 
-Once both halves are saved, both open the existing print and decoration editor.
+Once both halves are saved, both devices automatically open the existing strip
+developing screen. Returning through the invitation also goes straight there.
+The explicit “back to our booth” action keeps invite/privacy controls accessible
+without showing an extra completed-strip page. From the print, both can open the
+existing decoration editor.
 Canvas, layout, border, effect, paper and individual stars/gems/prints are shared.
 Named cursors show where the other person is working. Each device can download;
 refreshing restores the paired photos and saved decoration state. The editor

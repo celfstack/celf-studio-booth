@@ -115,3 +115,11 @@ export async function combinePhotos(photos: RoomPhotos): Promise<HTMLImageElemen
     }),
   );
 }
+
+/** Explicit booth management remains reachable after automatic developing. */
+export function roomManagementLink(link: string | null) {
+  if (!link) return "/";
+  const url = new URL(link);
+  url.searchParams.set("manage", "1");
+  return url.toString();
+}
