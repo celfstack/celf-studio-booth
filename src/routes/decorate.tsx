@@ -1635,7 +1635,7 @@ function Decorate() {
                   onPointerLeave={() => shared.client?.cursor(null)}
                   onPointerUp={endCanvasInteraction}
                   onPointerCancel={endCanvasInteraction}
-                  className={`block h-full w-full touch-none rounded-[3px] shadow-[0_24px_70px_-25px_rgba(40,28,20,.55)] ${(!stripOnly && layout === "prints") || decorations.includes("referenceStars") || decorations.includes("bedazzle") ? "cursor-grab active:cursor-grabbing" : ""}`}
+                  className={`block h-full w-full rounded-[3px] shadow-[0_24px_70px_-25px_rgba(40,28,20,.55)] ${(!stripOnly && layout === "prints") || decorations.includes("referenceStars") || decorations.includes("bedazzle") ? "touch-none cursor-grab active:cursor-grabbing" : "touch-auto"}`}
                   style={{
                     aspectRatio: `${format.width}/${format.height}`,
                     ...(stripOnly
@@ -1921,7 +1921,7 @@ function Decorate() {
                   className={`flex min-h-[76px] items-center gap-2.5 overflow-hidden rounded-xl border p-2.5 text-left transition hover:-translate-y-0.5 lg:min-h-[62px] lg:gap-2 lg:p-2 ${(item.id === "none" ? decorations.length === 0 : decorations.includes(item.id)) ? "border-rust bg-rust/5 shadow-[inset_0_0_0_1px_#a03d2e]" : "border-ink/15 bg-white/45 hover:border-ink/35"}`}
                 >
                   <span
-                    className={`flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg lg:h-10 lg:w-10 ${item.id === "lace" ? "bg-[#684a43]" : "bg-[#e8e1d6]"}`}
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg sm:h-14 sm:w-14 lg:h-10 lg:w-10 ${item.id === "lace" ? "bg-[#684a43]" : "bg-[#e8e1d6]"}`}
                   >
                     {(item.previewSrc ?? item.src) ? (
                       <img
