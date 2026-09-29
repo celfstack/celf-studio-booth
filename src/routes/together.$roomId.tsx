@@ -830,6 +830,15 @@ function Capture({
           </div>
         </div>
         <button
+          type="button"
+          className="paired-retake"
+          aria-label="Retake booth photos"
+          disabled={shooting || busy || opening || restarting}
+          onClick={onRetakeStrip}
+        >
+          {restarting ? "retaking…" : "retake"}
+        </button>
+        <button
           className="paired-flash"
           aria-pressed={flashEnabled}
           disabled={shooting || busy}
