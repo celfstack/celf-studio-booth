@@ -41,7 +41,6 @@ function SharedBooth() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [retry, setRetry] = useState(0);
   const photosVersion = useRef("");
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -154,29 +153,6 @@ function SharedBooth() {
       cancelled = true;
     };
   }, [complete, manage, photos, openStrip, retry]);
-  async function remove() {
-    setBusy(true);
-    try {
-      await roomApi(`/${roomId}`, token, "DELETE");
-      resetSession();
-      setPhotos(EMPTY_PHOTOS);
-      setRoom(null);
-      setTerminal(true);
-      setError(
-        "Your booth and its shared photos have been deleted. Downloaded copies stay with whoever saved them.",
-      );
-      try {
-        localStorage.removeItem("celf-together-recent");
-      } catch {
-        /* optional storage */
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not delete the booth. Please try again.");
-    } finally {
-      setBusy(false);
-      setConfirmDelete(false);
-    }
-  }
   const submitted = room ? Boolean(room[room.role]) : false;
   const canCapture = room && !submitted;
   const invite = room?.inviteToken ? roomLink(roomId, "guest", room.inviteToken) : "";
@@ -289,55 +265,6 @@ function SharedBooth() {
             </button>
             {developError && <p role="alert">{developError}</p>}
           </div>
-        )}
-        {room && (
-          <details>
-            <summary>Your return link & privacy</summary>
-            <div className="together-share-card">
-              <p>
-                Your return link{" "}
-                {room.role === "host" ? "— keep this one for yourself" : "— save it for later"}
-              </p>
-              <div className="together-link-field">
-                <button className="together-secondary" onClick={() => void copy(ownLink, "return")}>
-                  {copied === "return" ? "Copied ✓" : "Copy my return link"}
-                </button>
-              </div>
-              <p className="together-fine">
-                Saved in this browser when storage is available. This room and its photos expire on{" "}
-                {new Date(room.expiresAt).toLocaleDateString(undefined, {
-                  month: "long",
-                  day: "numeric",
-                })}
-                . Download your keepsakes before then. Either person can delete the shared booth.
-              </p>
-              {!confirmDelete ? (
-                <button className="together-danger" onClick={() => setConfirmDelete(true)}>
-                  Delete this shared booth
-                </button>
-              ) : (
-                <div role="alertdialog" aria-label="Delete the shared booth" className="mt-4">
-                  <p>Delete the booth and both people’s shared photos? This can’t be undone.</p>
-                  <div className="together-actions">
-                    <button
-                      className="together-primary"
-                      disabled={busy}
-                      onClick={() => void remove()}
-                    >
-                      Yes, delete booth
-                    </button>
-                    <button
-                      className="together-secondary"
-                      disabled={busy}
-                      onClick={() => setConfirmDelete(false)}
-                    >
-                      Keep it
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </details>
         )}
       </section>
     </main>

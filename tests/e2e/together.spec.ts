@@ -214,10 +214,18 @@ test("two separate browsers create, join, recover, decorate and download a share
   await guest.getByRole("button", { name: "back to our booth", exact: true }).first().click();
   await expect(guest).toHaveURL(/manage=(1|true)/);
   await expect(guest.getByRole("button", { name: "Return to our strip →" })).toBeVisible();
-  await guest.getByText("Your return link & privacy", { exact: true }).click();
-  await guest.getByRole("button", { name: "Delete this shared booth" }).click();
-  await guest.getByRole("button", { name: "Yes, delete booth" }).click();
-  await expect(guest.getByRole("alert")).toContainText("have been deleted");
+  await expect(guest.getByText("Your return link & privacy", { exact: true })).toHaveCount(0);
+  // Room deletion remains covered through the API after removing the privacy panel.
+  const deleted = await guest.evaluate(async (link) => {
+    const url = new URL(link);
+    const token = new URLSearchParams(url.hash.slice(1)).get("guest");
+    const response = await fetch(`/api${url.pathname}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    return response.ok;
+  }, invite);
+  expect(deleted).toBe(true);
   await host.goto(returnLink);
   await expect(host.getByRole("alert")).toContainText("expired or was deleted");
   expect(errors).toEqual([]);
