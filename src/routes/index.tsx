@@ -196,7 +196,11 @@ function Home() {
           aria-label="Enter Photo Booth"
           className="group mt-8 w-full max-w-[32rem] outline-offset-8 transition-transform duration-300 hover:scale-[1.012] focus-visible:outline-2 focus-visible:outline-rust active:scale-[.995] sm:mt-10"
         >
-          <span className="home-print-stage block w-full overflow-hidden" aria-hidden="true">
+          <span
+            key={mode}
+            className="home-print-stage block w-full overflow-hidden"
+            aria-hidden="true"
+          >
             <span className="home-delivery-sign">
               <span>photos</span>
               <span>delivered</span>
@@ -213,7 +217,11 @@ function Home() {
             </span>
             <span className="home-print-track">
               <img
-                src="/assets/home-photo-strip.png"
+                src={
+                  mode === "together"
+                    ? "/assets/home-together-photo-strip.png"
+                    : "/assets/home-photo-strip.png"
+                }
                 alt=""
                 width={1200}
                 height={3600}
