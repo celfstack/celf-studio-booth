@@ -26,12 +26,6 @@ export const Route = createFileRoute("/together/$roomId")({
   }),
   component: SharedBooth,
 });
-const POSES = [
-  "Make half a heart",
-  "Point to your person",
-  "Blow them a kiss",
-  "One just for the two of you",
-];
 const EMPTY_PHOTOS: RoomPhotos = { host: [], guest: [] };
 
 function SharedBooth() {
@@ -48,13 +42,11 @@ function SharedBooth() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [localPreview, setLocalPreview] = useState(false);
   const [retry, setRetry] = useState(0);
   const photosVersion = useRef("");
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setLocalPreview(["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname));
     const hash = new URLSearchParams(window.location.hash.slice(1));
     const credential = hash.get("host") || hash.get("guest") || "";
     setToken(credential);
@@ -126,7 +118,7 @@ function SharedBooth() {
       if (copyTimer.current) clearTimeout(copyTimer.current);
       copyTimer.current = setTimeout(() => setCopied(""), 3000);
     } catch {
-      setError("Copy is unavailable in this browser. Select the link above and copy it manually.");
+      setError("Copy is unavailable. Check clipboard permissions and try again.");
     }
   }
   const role = room?.role;
@@ -210,19 +202,8 @@ function SharedBooth() {
     );
 
   return (
-    <main className="together-page">
-      <header className="together-nav">
-        <Link className="together-wordmark" to="/">
-          celf studio
-        </Link>
-        <span className="text-sm text-ink-soft">a little closer ♡</span>
-      </header>
-      <section className="together-room">
-        <nav aria-label="Booth progress" className="together-progress">
-          <span aria-current={!submitted ? "step" : undefined}>01 · your photos</span>
-          <span aria-current={submitted && !complete ? "step" : undefined}>02 · together</span>
-          <span aria-current={complete ? "step" : undefined}>03 · our strip</span>
-        </nav>
+    <main className="paired-booth-page">
+      <section className="paired-booth-room">
         {loading && <p role="status">Opening your little booth…</p>}
         {error && (
           <div className="together-error" role="alert">
@@ -240,57 +221,33 @@ function SharedBooth() {
           </Link>
         )}
         {room && (
-          <div className="together-room-toolbar">
-            <div className="together-room-people">
-              <label>
-                Your name <span>(optional)</span>
-                <input
-                  aria-label="Your name (optional)"
-                  maxLength={32}
-                  value={nickname}
-                  placeholder={room.role === "host" ? "Person 1" : "Person 2"}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[<>\p{Cc}\p{Cf}]/gu, "");
-                    setNickname(value);
-                    live.client?.setName(value);
-                  }}
-                />
-              </label>
-              <span role="status">
-                {live.connected
-                  ? "● Together live"
-                  : live.client?.online
-                    ? "Connecting you…"
-                    : "A spot saved for your person"}
-              </span>
-            </div>
-            {invite && (
-              <div className="together-link-field">
-                <input
-                  aria-label="Invitation link"
-                  value={invite}
-                  readOnly
-                  onFocus={(e) => e.target.select()}
-                />
-                <button className="together-primary" onClick={() => void copy(invite, "invite")}>
-                  {copied === "invite" ? "Copied ✓" : "Copy invite"}
-                </button>
-              </div>
-            )}
-            <p className="together-fine">
-              {localPreview
-                ? "Local preview: this invite works on this computer. Publishing enables other devices."
-                : "Send the invite to join live, or leave your photos here for later."}
-            </p>
-            {live.error && (
-              <p role="alert" className="together-error">
-                {live.error}{" "}
-                <button className="underline" onClick={() => live.client?.restart()}>
-                  Retry live
-                </button>
-              </p>
-            )}
+          <div className="paired-booth-toolbar">
+            <input
+              aria-label="Your name (optional)"
+              maxLength={32}
+              value={nickname}
+              placeholder="your name"
+              onChange={(e) => {
+                const value = e.target.value.replace(/[<>\p{Cc}\p{Cf}]/gu, "");
+                setNickname(value);
+                live.client?.setName(value);
+              }}
+            />
+            <button onClick={() => void copy(invite || ownLink, "invite")}>
+              {copied === "invite" ? "Copied ✓" : "Copy invite ↗"}
+            </button>
+            <span className="sr-only" role="status">
+              {live.connected ? "● Together live" : ""}
+            </span>
           </div>
+        )}
+        {live.error && (
+          <p role="alert" className="paired-booth-error">
+            {live.error}{" "}
+            <button className="underline" onClick={() => live.client?.restart()}>
+              Retry live
+            </button>
+          </p>
         )}
         {canCapture && (
           <Capture
@@ -307,23 +264,19 @@ function SharedBooth() {
           />
         )}
         {room && !canCapture && !complete && (
-          <>
-            <p className="together-eyebrow">a little note from far away</p>
-            <h1>Your half is here. Their turn next.</h1>
-            <p className="together-room-lede">
-              {room.role === "host"
-                ? "Send them this invitation. They’ll see your poses and make the other half, whenever they’re ready."
-                : "Their photos will appear here when they’re ready to share. You can leave this page and return with the same link."}
-            </p>
+          <div className="paired-booth-card paired-booth-waiting">
+            <LookHere />
             <MiniStrip photos={photos} />
-            <p className="together-status">
-              {room.role === "host" ? "Waiting for your person" : "Waiting for their photos"}
+            <h1 className="font-hand mt-5 text-2xl">your half is saved</h1>
+            <p className="mt-2 text-sm text-ink-soft">
+              They can join with your invite, whenever they’re ready.
             </p>
-            <p className="together-fine center">
-              You don’t need to keep this page open. Come back with your saved link to find your
-              finished strip.
-            </p>
-          </>
+          </div>
+        )}
+        {!canCapture && (
+          <Link className="paired-booth-back" to="/">
+            ← sneak back out
+          </Link>
         )}
         {room && complete && (
           <div className="together-actions">
@@ -341,19 +294,13 @@ function SharedBooth() {
           <details>
             <summary>Your return link & privacy</summary>
             <div className="together-share-card">
-              <label htmlFor="return-link">
+              <p>
                 Your return link{" "}
                 {room.role === "host" ? "— keep this one for yourself" : "— save it for later"}
-              </label>
+              </p>
               <div className="together-link-field">
-                <input
-                  id="return-link"
-                  value={ownLink}
-                  readOnly
-                  onFocus={(e) => e.target.select()}
-                />
                 <button className="together-secondary" onClick={() => void copy(ownLink, "return")}>
-                  {copied === "return" ? "Copied ✓" : "Copy"}
+                  {copied === "return" ? "Copied ✓" : "Copy my return link"}
                 </button>
               </div>
               <p className="together-fine">
@@ -394,6 +341,41 @@ function SharedBooth() {
         )}
       </section>
     </main>
+  );
+}
+function LookHere() {
+  return (
+    <div className="flex items-center justify-center">
+      <div className="flex w-fit items-center gap-2.5 rounded-full border border-ink/20 px-4 py-2">
+        <span className="font-type text-[10px] font-bold tracking-[0.18em] text-ink uppercase">
+          Look here
+        </span>
+        <span
+          aria-hidden="true"
+          className="h-4 w-4 rounded-full bg-ink shadow-[inset_0_2px_3px_rgba(255,255,255,0.35),0_0_0_3px_rgba(42,36,30,0.15)]"
+        />
+        <span className="font-type text-[10px] font-bold tracking-[0.18em] text-ink uppercase">
+          Smile
+        </span>
+      </div>
+    </div>
+  );
+}
+function ShutterStar() {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className="h-20 w-20 transition-transform duration-200 ease-out group-hover:-rotate-12 group-hover:scale-110 group-active:scale-95"
+      aria-hidden="true"
+    >
+      <path
+        d="M50 6 L61 36 Q62 39 65 39 L94 39 L71 58 Q68 60 69 63 L78 93 L53 75 Q50 73 47 75 L22 93 L31 63 Q32 60 29 58 L6 39 L35 39 Q38 39 39 36 Z"
+        fill="#f2c94c"
+        stroke="#2a241e"
+        strokeWidth="3.5"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 function MiniStrip({ photos }: { photos: RoomPhotos }) {
@@ -441,6 +423,9 @@ function Capture({
   const [selected, setSelected] = useState(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [opening, setOpening] = useState(false);
+  const [flashEnabled, setFlashEnabled] = useState(false);
+  const [flash, setFlash] = useState(false);
+  const autoStarted = useRef(false);
   const [shooting, setShooting] = useState(false);
   const [count, setCount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -465,6 +450,7 @@ function Capture({
     run.current++;
     setShooting(false);
     setCount(null);
+    setFlash(false);
   }, []);
   useEffect(() => {
     alive.current = true;
@@ -543,6 +529,14 @@ function Capture({
       if (alive.current && current === openingRun.current) setOpening(false);
     }
   }
+  const startCameraRef = useRef(startCamera);
+  startCameraRef.current = startCamera;
+  useEffect(() => {
+    if (live.client && !autoStarted.current) {
+      autoStarted.current = true;
+      void startCameraRef.current();
+    }
+  }, [live.client]);
   async function capture(startAt?: number) {
     if (shooting || !video.current || !cameraOn) return;
     const generation = ++run.current;
@@ -564,6 +558,7 @@ function Capture({
           const remaining =
             deadline - Date.now() - (startAt ? liveRef.current.client?.offset || 0 : 0);
           setCount(Math.min(3, Math.max(1, Math.ceil(remaining / 1000))));
+          if (flashEnabled && remaining <= 160) setFlash(true);
           await sleep(Math.min(80, remaining));
         }
         if (!alive.current || generation !== run.current || document.hidden) return;
@@ -575,6 +570,7 @@ function Capture({
         });
         submissionId.current = crypto.randomUUID();
         setCount(null);
+        setFlash(false);
         await sleep(700);
       }
       if (generation === run.current) stopCamera();
@@ -585,6 +581,7 @@ function Capture({
         activeCapture.current = false;
         setShooting(false);
         setCount(null);
+        setFlash(false);
       }
     }
   }
@@ -690,9 +687,7 @@ function Capture({
       ) : shots[selected] ? (
         <img src={shots[selected]} alt={`Your pose ${selected + 1}`} />
       ) : (
-        <div className="together-half-empty">
-          <span>♡</span>Your place in the picture
-        </div>
+        <div className="together-half-empty" aria-hidden="true" />
       )}
       <span className="together-half-label">{name || "you"}</span>
       {count && (
@@ -718,153 +713,168 @@ function Capture({
           alt={`${room.host?.name || room.name}'s matching pose ${selected + 1}`}
         />
       ) : (
-        <div className="together-half-empty">
-          <span>♡</span>Saving a spot
-          <br />
-          for your person
-        </div>
+        <div className="together-half-empty" aria-hidden="true" />
       )}
-      <span className="together-half-label">{live.client?.other?.name || "your person"}</span>
+      <span className="together-half-label">
+        {live.client?.other?.name && !/^Person [12]$/.test(live.client.other.name)
+          ? live.client.other.name
+          : "your person"}
+      </span>
     </div>
   );
 
+  const sharedShutter =
+    cameraOn && live.connected && Boolean(live.client?.other?.camera) && !complete;
+  const shutterLabel = shooting
+    ? "Taking photos"
+    : !cameraOn
+      ? complete
+        ? "Save my half →"
+        : "Start my camera"
+      : sharedShutter
+        ? "Start together"
+        : complete
+          ? `Retake photo ${selected + 1}`
+          : shots.some(Boolean)
+            ? "Continue my photos"
+            : "Take my four photos";
+  const shutterText = shooting
+    ? "here we go"
+    : opening
+      ? "opening camera…"
+      : !cameraOn
+        ? complete
+          ? "save my half →"
+          : "open camera"
+        : sharedShutter
+          ? "start together"
+          : complete
+            ? `retake photo ${selected + 1}`
+            : "press to start";
+  const shutter = () => {
+    if (!cameraOn) {
+      if (complete) void submit();
+      else void startCamera();
+    } else if (sharedShutter) void live.client?.capture().catch((e) => setError(e.message));
+    else void capture();
+  };
   return (
     <>
-      <p className="together-eyebrow">two places. one little booth.</p>
-      <h1>{complete && !cameraOn ? "Your four little moments." : "Closer, wherever you are."}</h1>
-      <p className="together-room-lede">
-        {complete && !cameraOn
-          ? "Review your photos, retake any pose, then save your half."
-          : "Open your cameras, get ready, and pose together. Or take your half now and let them join later."}
-      </p>
-      <div className="together-camera">
-        {room.role === "host" ? [ownHalf, otherHalf] : [otherHalf, ownHalf]}
-      </div>
-      <p className="together-pose">
-        {selected + 1} / 4 &nbsp; · &nbsp; {POSES[selected]}{" "}
-        <span className="opacity-60">(or do your own thing)</span>
-      </p>
-      {shots.some(Boolean) && (
-        <div className="together-contact-sheet" aria-label="Review your four photos">
+      <div className="paired-booth-card">
+        <LookHere />
+        <div className="together-camera paired-camera" aria-label="Together photo booth">
+          {room.role === "host" ? [ownHalf, otherHalf] : [otherHalf, ownHalf]}
+          <div
+            aria-hidden="true"
+            className="curtain-panel absolute inset-0 rounded-2xl pointer-events-none"
+            data-open="true"
+          />
+        </div>
+        <p
+          className="font-hand mt-4 min-h-7 text-center text-2xl tracking-[-1px] text-ink"
+          role="status"
+        >
+          {shooting
+            ? count
+              ? "smile !"
+              : "hold it ..."
+            : complete && !cameraOn
+              ? "ready when you are"
+              : "four poses, one strip"}
+        </p>
+        <div className="paired-contact-sheet" aria-label="Review your four photos">
           {[0, 1, 2, 3].map((i) => (
             <button
               key={i}
               type="button"
               disabled={shooting || busy || !shots[i]}
-              aria-pressed={selected === i}
+              aria-pressed={Boolean(shots[i]) && selected === i}
               aria-label={`Review photo ${i + 1}`}
               onClick={() => setSelected(i)}
             >
-              {shots[i] ? (
-                <img src={shots[i]} alt={`Your photo ${i + 1}`} />
-              ) : (
-                <div className="aspect-[2/3] bg-ink/5" />
-              )}
-              <span>{i + 1}</span>
+              {shots[i] ? <img src={shots[i]} alt={`Your photo ${i + 1}`} /> : <span>{i + 1}</span>}
             </button>
           ))}
         </div>
-      )}
-      {error && (
-        <p className="together-error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="together-actions">
-        {shooting ? (
+        {error && (
+          <p className="together-error" role="alert">
+            {error}
+          </p>
+        )}
+        {cameraOn && live.connected && !shooting && (
           <button
-            className="together-secondary"
-            onClick={() => {
-              live.client?.cancel();
-              cancel();
-            }}
+            className="paired-ready"
+            aria-pressed={ready}
+            onClick={() => live.client?.setReady(!ready)}
           >
-            Cancel countdown
+            {ready ? "Ready ✓" : "I'm ready"}
           </button>
-        ) : cameraOn ? (
-          <>
-            {live.connected && (
+        )}
+        <div className="paired-shutter-area">
+          <button
+            className="group paired-shutter"
+            aria-label={shutterLabel}
+            disabled={shooting || busy || opening || (sharedShutter && !bothReady)}
+            onClick={shutter}
+          >
+            <ShutterStar />
+            <span className="font-hand text-2xl text-ink">{busy ? "saving…" : shutterText}</span>
+          </button>
+          <div className="paired-secondary-actions">
+            {shooting ? (
+              <button
+                onClick={() => {
+                  live.client?.cancel();
+                  cancel();
+                }}
+              >
+                Cancel countdown
+              </button>
+            ) : (
               <>
-                <button
-                  className="together-secondary"
-                  aria-pressed={ready}
-                  onClick={() => live.client?.setReady(!ready)}
-                >
-                  {ready ? "Ready ✓" : "I'm ready"}
-                </button>
-                <button
-                  className="together-primary"
-                  disabled={!bothReady || busy}
-                  onClick={() => void live.client?.capture().catch((e) => setError(e.message))}
-                >
-                  Start together
-                </button>
+                {complete && !cameraOn && (
+                  <button disabled={busy || opening} onClick={() => void startCamera()}>
+                    Retake photo {selected + 1}
+                  </button>
+                )}
+                {cameraOn && <button onClick={stopCamera}>Stop camera</button>}
+                {sharedShutter && (
+                  <button disabled={busy} onClick={() => void capture()}>
+                    Take my four photos
+                  </button>
+                )}
               </>
             )}
-            <button
-              className={live.connected ? "together-secondary" : "together-primary"}
-              disabled={busy}
-              onClick={() => void capture()}
-            >
-              {complete
-                ? `Retake photo ${selected + 1}`
-                : shots.some(Boolean)
-                  ? "Continue my photos"
-                  : "Take my four photos"}
-            </button>
-            <button className="together-secondary" onClick={stopCamera}>
-              Stop camera
-            </button>
-          </>
-        ) : (
-          <button
-            className={complete ? "together-secondary" : "together-primary"}
-            disabled={busy || opening}
-            onClick={() => void startCamera()}
-          >
-            {opening
-              ? "Opening camera…"
-              : complete
-                ? `Retake photo ${selected + 1}`
-                : "Start my camera"}
-          </button>
-        )}
-        {complete && !cameraOn && (
-          <button className="together-primary" disabled={busy} onClick={() => void submit()}>
-            {busy
-              ? "Sharing your photos…"
-              : room.role === "host"
-                ? "Save my half →"
-                : "Save my half →"}
-          </button>
-        )}
+          </div>
+        </div>
+        <button
+          className="paired-flash"
+          aria-pressed={flashEnabled}
+          disabled={shooting || busy}
+          onClick={() => setFlashEnabled((value) => !value)}
+        >
+          flash {flashEnabled ? "on ✦" : "off"}
+        </button>
       </div>
-      {!shooting && (
-        <>
-          <input
-            ref={upload}
-            type="file"
-            accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
-            multiple
-            className="sr-only"
-            tabIndex={-1}
-            aria-label="Upload four photos"
-            onChange={(e) => void uploadPhotos(e)}
-          />
-          <button
-            className="together-text-link"
-            disabled={busy || opening}
-            onClick={() => upload.current?.click()}
-          >
-            {busy ? "Working…" : "or upload four photos"}
-          </button>
-        </>
+      {flash && (
+        <span aria-hidden="true" className="pointer-events-none fixed inset-0 z-[100] bg-white" />
       )}
-      <p className="together-fine center">
-        {complete
-          ? "Sharing saves these four photos to your private booth for 7 days. Your person can see and download them. Once shared, this side is final."
-          : "When your camera is on, your person can see you live. Audio is off. Review each photo before saving your half."}
-      </p>
+      <div className="paired-booth-footer">
+        <Link to="/">← sneak back out</Link>
+        <input
+          ref={upload}
+          type="file"
+          accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
+          multiple
+          className="sr-only"
+          tabIndex={-1}
+          aria-label="Upload four photos"
+          onChange={(e) => void uploadPhotos(e)}
+        />
+        <button disabled={busy || opening || shooting} onClick={() => upload.current?.click()}>
+          {busy ? "opening photos…" : "upload photos →"}
+        </button>
+      </div>
     </>
   );
 }

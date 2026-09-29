@@ -653,3 +653,45 @@
 .together-room .together-eyebrow { display:none; }
 .together-room-lede { font-size:16px; margin:8px auto 14px; max-width:600px; }
 .together-camera { margin-top:16px; width:min(100%,560px); }
+
+/* Together uses the same cream camera faceplate and dark room as Solo. */
+.paired-booth-page { min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#211b15; padding:24px 16px; }
+.paired-booth-room { width:100%; max-width:512px; }
+.paired-booth-toolbar { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:0 4px 14px; color:var(--color-paper); }
+.paired-booth-toolbar input { width:140px; max-width:50%; border-bottom:1px solid #faf6ef45; padding:6px 0; font-size:16px; outline-offset:4px; }
+.paired-booth-toolbar input::placeholder { color:#faf6ef99; }
+.paired-booth-toolbar button { border:1px solid #faf6ef66; border-radius:999px; padding:6px 16px; font-size:15px; }
+.paired-booth-toolbar button:hover { background:#faf6ef18; }
+.paired-booth-card { position:relative; width:100%; border-radius:28px; background:var(--color-paper); padding:20px; text-align:center; color:var(--color-ink); box-shadow:0 30px 80px -30px #000e; }
+.paired-camera.together-camera { position:relative; width:100%; aspect-ratio:1; margin:20px auto 0; border:0; border-radius:16px; background:#2a241e; }
+.paired-camera .together-half { min-width:0; height:100%; aspect-ratio:auto; background:#2a241e; }
+.paired-camera .together-half + .together-half { border-left:1px solid #faf6ef99; }
+.paired-camera .together-half video,.paired-camera .together-half img { position:absolute; width:100%; height:75%; top:12.5%; object-fit:cover; }
+.paired-camera .together-half-empty { width:100%; height:100%; padding:0; background:#342d25; }
+.paired-camera .together-half-label { z-index:2; bottom:12px; left:12px; font-size:12px; }
+.paired-contact-sheet { display:flex; justify-content:center; gap:10px; margin-top:12px; }
+.paired-contact-sheet button { width:64px; height:48px; border:1px dashed #2a241e4d; border-radius:6px; overflow:hidden; }
+.paired-contact-sheet button[aria-pressed=true] { border:2px solid #a03d2e; }
+.paired-contact-sheet img { width:100%; height:100%; object-fit:cover; }
+.paired-contact-sheet span { font-family:var(--font-type); color:var(--color-ink-soft); font-size:12px; }
+.paired-shutter-area { display:flex; flex-direction:column; align-items:center; margin-top:24px; padding-bottom:4px; }
+.paired-shutter { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.paired-shutter:disabled { opacity:.4; cursor:not-allowed; }
+.paired-ready { display:block; margin:16px auto -10px; padding:4px 14px; border:1px solid #2a241e44; border-radius:999px; font-size:14px; }
+.paired-ready[aria-pressed=true] { background:var(--color-ink); color:var(--color-paper); }
+.paired-secondary-actions { display:flex; justify-content:center; gap:14px; margin-top:12px; padding:0 50px; font-size:12px; color:var(--color-ink-soft); }
+.paired-secondary-actions button { text-decoration:underline; text-underline-offset:3px; }
+.paired-flash { position:absolute; right:20px; bottom:20px; border:1px solid #2a241e40; border-radius:999px; padding:6px 12px; font-size:14px; }
+.paired-flash[aria-pressed=true] { background:var(--color-ink); color:var(--color-paper); }
+.paired-booth-footer { display:flex; justify-content:space-between; gap:24px; margin-top:16px; padding:0 4px; font-family:var(--font-hand); font-size:18px; color:#faf6ef99; }
+.paired-booth-footer :is(a,button):hover { color:var(--color-paper); }
+.paired-booth-footer button:disabled { opacity:.35; }
+.paired-booth-back { display:block; margin-top:16px; color:#faf6ef99; }
+.paired-booth-room>details { margin:20px auto 0; color:#faf6ef88; font-size:12px; }
+.paired-booth-room>details summary { cursor:pointer; text-align:center; }
+.paired-booth-room .together-share-card { color:var(--color-ink); background:var(--color-paper); padding:20px; }
+.paired-booth-error { margin:0 0 14px; color:#e8b8ae; font-size:14px; text-align:center; }
+.paired-booth-waiting .together-mini-strip { margin-top:24px; }
+.paired-booth-room>p[role=status] { color:var(--color-paper); text-align:center; }
+@media(min-width:640px){.paired-booth-card{padding:28px}.paired-flash{right:28px;bottom:28px}}
+@media(max-width:380px){.paired-secondary-actions{padding:0;flex-wrap:wrap}.paired-flash{right:12px;bottom:60px;font-size:12px;padding:4px 8px}.paired-contact-sheet{gap:8px}.paired-contact-sheet button{width:56px}}

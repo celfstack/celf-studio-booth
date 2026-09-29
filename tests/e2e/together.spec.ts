@@ -24,6 +24,21 @@ async function photos(page: Page, color: string) {
   }));
 }
 
+async function copyInvite(page: Page) {
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (value: string) => {
+          (window as unknown as { copiedInvite: string }).copiedInvite = value;
+        },
+      },
+    });
+  });
+  await page.getByRole("button", { name: "Copy invite ↗", exact: true }).click();
+  return page.evaluate(() => (window as unknown as { copiedInvite: string }).copiedInvite);
+}
+
 test("two separate browsers create, join, recover, decorate and download a shared strip", async ({
   browser,
   baseURL,
@@ -43,7 +58,8 @@ test("two separate browsers create, join, recover, decorate and download a share
   await host.getByRole("button", { name: "Together ♡", exact: true }).click();
   await expect(host).toHaveURL(`${baseURL}/`);
   await host.getByRole("button", { name: "Enter Photo Booth", exact: true }).click();
-  await expect(host.getByRole("heading", { name: "Closer, wherever you are." })).toBeVisible();
+  await expect(host.getByLabel("Together photo booth")).toBeVisible();
+  await expect(host.getByLabel("Invitation link")).toHaveCount(0);
   await host.getByLabel("Your name (optional)").fill("Celina");
   const returnLink = host.url();
   const input = host.getByLabel("Upload four photos");
@@ -51,20 +67,16 @@ test("two separate browsers create, join, recover, decorate and download a share
   await input.setInputFiles(hostFiles.slice(0, 3));
   await expect(host.getByRole("alert")).toContainText("exactly four");
   await input.setInputFiles(hostFiles);
-  await expect(host.getByRole("heading", { name: "Your four little moments." })).toBeVisible();
+  await expect(host.getByRole("button", { name: "Save my half →", exact: true })).toBeVisible();
   await host.getByRole("button", { name: /Save my half/ }).click();
-  await expect(
-    host.getByRole("heading", { name: "Your half is here. Their turn next." }),
-  ).toBeVisible();
-  const invite = await host.getByLabel("Invitation link").inputValue();
+  await expect(host.getByRole("heading", { name: "your half is saved" })).toBeVisible();
+  const invite = await copyInvite(host);
   expect(invite).toContain("#guest=");
   expect(returnLink).toContain("#host=");
   await host.reload();
-  await expect(
-    host.getByRole("heading", { name: "Your half is here. Their turn next." }),
-  ).toBeVisible();
+  await expect(host.getByRole("heading", { name: "your half is saved" })).toBeVisible();
   await guest.goto(invite);
-  await expect(guest.getByRole("heading", { name: "Closer, wherever you are." })).toBeVisible();
+  await expect(guest.getByLabel("Together photo booth")).toBeVisible();
   await expect(guest.getByAltText("Celina's matching pose 1")).toBeVisible();
   await guest.getByLabel("Your name (optional)").fill("Robin");
   await guest.getByLabel("Upload four photos").setInputFiles(await photos(guest, "#2762b0"));
@@ -225,7 +237,6 @@ test("camera countdown, cancel, retake and denied-camera upload fallback", async
     "true",
   );
   await page.getByRole("button", { name: "Enter Photo Booth", exact: true }).click();
-  await page.getByRole("button", { name: "Start my camera" }).click();
   await expect(page.locator("video")).toBeVisible();
   await expect
     .poll(() => page.locator("video").evaluate((v: HTMLVideoElement) => v.readyState))
@@ -234,7 +245,7 @@ test("camera countdown, cancel, retake and denied-camera upload fallback", async
   await page.getByRole("button", { name: "Cancel countdown" }).click();
   await expect(page.getByRole("button", { name: "Take my four photos" })).toBeVisible();
   await page.getByRole("button", { name: "Take my four photos" }).click();
-  await expect(page.getByRole("heading", { name: "Your four little moments." })).toBeVisible({
+  await expect(page.getByRole("button", { name: "Save my half →", exact: true })).toBeVisible({
     timeout: 25_000,
   });
   await page.getByRole("button", { name: "Review photo 2" }).click();
@@ -248,7 +259,7 @@ test("camera countdown, cancel, retake and denied-camera upload fallback", async
     .poll(() => page.locator("video").evaluate((v: HTMLVideoElement) => v.readyState))
     .toBeGreaterThanOrEqual(2);
   await page.getByRole("button", { name: "Retake photo 2" }).click();
-  await expect(page.getByRole("heading", { name: "Your four little moments." })).toBeVisible({
+  await expect(page.getByRole("button", { name: "Save my half →", exact: true })).toBeVisible({
     timeout: 10_000,
   });
   expect(
@@ -260,7 +271,7 @@ test("camera countdown, cancel, retake and denied-camera upload fallback", async
   });
   await page.getByRole("button", { name: "Retake photo 2" }).click();
   await expect(page.getByRole("alert")).toContainText("camera isn’t available");
-  await expect(page.getByRole("button", { name: "or upload four photos" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "upload photos →" })).toBeVisible();
   await context.close();
 });
 
@@ -310,14 +321,16 @@ test("live cameras, one synchronized countdown, shared cancellation, and guest-f
     "true",
   );
   await h.getByRole("button", { name: "Enter Photo Booth", exact: true }).click();
-  const invite = await h.getByLabel("Invitation link").inputValue();
+  const invite = await copyInvite(h);
   await g.goto(invite);
   await expect(h.getByText("● Together live", { exact: true })).toBeVisible({ timeout: 40000 });
   await expect(g.getByText("● Together live", { exact: true })).toBeVisible({ timeout: 40000 });
-  await Promise.all([
-    h.getByRole("button", { name: "Start my camera" }).click(),
-    g.getByRole("button", { name: "Start my camera" }).click(),
-  ]);
+  await Promise.all(
+    [h, g].map(async (page) => {
+      await page.getByRole("button", { name: "Stop camera", exact: true }).click();
+      await page.getByRole("button", { name: "Start my camera", exact: true }).click();
+    }),
+  );
   await expect(h.getByText("● Together live", { exact: true })).toBeVisible({ timeout: 40000 });
   await expect(g.getByText("● Together live", { exact: true })).toBeVisible({ timeout: 40000 });
   for (const page of [h, g]) {
@@ -336,7 +349,6 @@ test("live cameras, one synchronized countdown, shared cancellation, and guest-f
     timeout: 10000,
   });
   await g.reload();
-  await g.getByRole("button", { name: "Start my camera" }).click();
   await expect(g.getByText("● Together live", { exact: true })).toBeVisible({ timeout: 40000 });
   await expect
     .poll(() =>
@@ -351,7 +363,7 @@ test("live cameras, one synchronized countdown, shared cancellation, and guest-f
   await g.getByRole("button", { name: "Start together", exact: true }).click();
   await Promise.all(
     [h, g].map((page) =>
-      expect(page.getByRole("heading", { name: "Your four little moments." })).toBeVisible({
+      expect(page.getByRole("button", { name: "Save my half →", exact: true })).toBeVisible({
         timeout: 30000,
       }),
     ),

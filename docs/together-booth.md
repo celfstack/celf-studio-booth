@@ -7,7 +7,11 @@ button. Together creates a private room immediately. `/together` redirects back
 to the homepage with Together selected; there is no separate landing or name gate.
 The original solo camera, printing, backgrounds, filters and decoration tools remain.
 
-A room immediately shows a guest invitation and an optional nickname. The creator
+The shared camera uses the Solo booth’s dark background, cream faceplate,
+Look here / Smile sign, four photo slots, star shutter and flash control. A compact
+row above it contains an optional nickname and Copy invite button; full invitation
+URLs and the previous introductory/status copy are not displayed. The camera opens
+automatically on entry, with manual retry if access is denied. The creator
 is the left half; the invitee is the right. Both can enable their cameras and see
 one another live (video only). Each presses Ready, then either starts the shared
 four-photo countdown. Either can cancel. Each reviews and saves their own half;
