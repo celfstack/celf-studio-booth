@@ -249,6 +249,21 @@ test("camera countdown, cancel, retake and denied-camera upload fallback", async
   await expect
     .poll(() => page.locator("video").evaluate((v: HTMLVideoElement) => v.readyState))
     .toBeGreaterThanOrEqual(2);
+  const stopButton = page.getByRole("button", { name: "Stop camera", exact: true });
+  await stopButton.scrollIntoViewIfNeeded();
+  const stopPosition = await stopButton.boundingBox();
+  await stopButton.click();
+  const openButton = page.getByRole("button", { name: "Open camera", exact: true });
+  await expect(openButton).toBeVisible();
+  const openPosition = await openButton.boundingBox();
+  expect(openPosition!.y).toBeCloseTo(stopPosition!.y, 0);
+  expect(openPosition!.x + openPosition!.width / 2).toBeCloseTo(
+    stopPosition!.x + stopPosition!.width / 2,
+    0,
+  );
+  await expect(page.getByRole("button", { name: "Take my four photos" })).toBeDisabled();
+  await openButton.click();
+  await expect(page.getByRole("button", { name: "Take my four photos" })).toBeEnabled();
   await page.getByRole("button", { name: "Take my four photos" }).click();
   await page.getByRole("button", { name: "Cancel countdown" }).click();
   await expect(page.getByRole("button", { name: "Take my four photos" })).toBeVisible();
@@ -261,7 +276,7 @@ test("camera countdown, cancel, retake and denied-camera upload fallback", async
     .getByRole("button", { name: "Review photo 2" })
     .locator("img")
     .getAttribute("src");
-  await page.getByRole("button", { name: "Retake photo 2" }).click();
+  await page.getByRole("button", { name: "Open camera" }).click();
   await expect(page.locator("video")).toBeVisible();
   await expect
     .poll(() => page.locator("video").evaluate((v: HTMLVideoElement) => v.readyState))
@@ -277,7 +292,7 @@ test("camera countdown, cancel, retake and denied-camera upload fallback", async
     navigator.mediaDevices.getUserMedia = () =>
       Promise.reject(new DOMException("Denied", "NotAllowedError"));
   });
-  await page.getByRole("button", { name: "Retake photo 2" }).click();
+  await page.getByRole("button", { name: "Open camera" }).click();
   await expect(page.getByRole("alert")).toContainText("camera isn’t available");
   await expect(page.getByRole("button", { name: "upload photos →" })).toBeVisible();
   await context.close();
@@ -336,7 +351,7 @@ test("live cameras, one synchronized countdown, shared cancellation, and guest-f
   await Promise.all(
     [h, g].map(async (page) => {
       await page.getByRole("button", { name: "Stop camera", exact: true }).click();
-      await page.getByRole("button", { name: "Start my camera", exact: true }).click();
+      await page.getByRole("button", { name: "Open camera", exact: true }).click();
     }),
   );
   await expect(h.getByText("● Together live", { exact: true })).toBeVisible({ timeout: 40000 });

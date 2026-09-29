@@ -654,10 +654,8 @@ function Capture({
     cameraOn && live.connected && Boolean(live.client?.other?.camera) && !complete;
   const shutterLabel = shooting
     ? "Taking photos"
-    : !cameraOn
-      ? complete
-        ? "Save my half →"
-        : "Start my camera"
+    : complete && !cameraOn
+      ? "Save my half →"
       : sharedShutter
         ? "Start together"
         : complete
@@ -667,21 +665,16 @@ function Capture({
             : "Take my four photos";
   const shutterText = shooting
     ? "here we go"
-    : opening
-      ? "opening camera…"
-      : !cameraOn
-        ? complete
-          ? "save my half →"
-          : "open camera"
-        : sharedShutter
-          ? "start together"
-          : complete
-            ? `retake photo ${selected + 1}`
-            : "press to start";
+    : complete && !cameraOn
+      ? "save my half →"
+      : sharedShutter
+        ? "start together"
+        : complete
+          ? `retake photo ${selected + 1}`
+          : "press to start";
   const shutter = () => {
     if (!cameraOn) {
       if (complete) void submit();
-      else void startCamera();
     } else if (sharedShutter) void live.client?.capture().catch((e) => setError(e.message));
     else void capture();
   };
@@ -728,10 +721,11 @@ function Capture({
             {error}
           </p>
         )}
-        {cameraOn && live.connected && !shooting && (
+        {live.connected && !shooting && (
           <button
             className="paired-ready"
             aria-pressed={ready}
+            disabled={!cameraOn || opening}
             onClick={() => live.client?.setReady(!ready)}
           >
             {ready ? "Ready ✓" : "I'm ready"}
@@ -741,7 +735,13 @@ function Capture({
           <button
             className="group paired-shutter"
             aria-label={shutterLabel}
-            disabled={shooting || busy || opening || (sharedShutter && !bothReady)}
+            disabled={
+              shooting ||
+              busy ||
+              opening ||
+              (!cameraOn && !complete) ||
+              (sharedShutter && !bothReady)
+            }
             onClick={shutter}
           >
             <ShutterStar />
@@ -759,12 +759,12 @@ function Capture({
               </button>
             ) : (
               <>
-                {complete && !cameraOn && (
-                  <button disabled={busy || opening} onClick={() => void startCamera()}>
-                    Retake photo {selected + 1}
-                  </button>
-                )}
-                {cameraOn && <button onClick={stopCamera}>Stop camera</button>}
+                <button
+                  disabled={busy || opening}
+                  onClick={() => (cameraOn ? stopCamera() : void startCamera())}
+                >
+                  {opening ? "Opening camera…" : cameraOn ? "Stop camera" : "Open camera"}
+                </button>
                 {sharedShutter && (
                   <button disabled={busy} onClick={() => void capture()}>
                     Take my four photos
