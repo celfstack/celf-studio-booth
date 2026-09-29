@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { roomApi, rememberRoom, recentRoom } from "../lib/together/client";
+import { roomApi, rememberRoom } from "../lib/together/client";
 import { resetSession } from "../lib/strip/session";
 
 export const Route = createFileRoute("/")({
@@ -101,10 +101,8 @@ function Home() {
   const [hydrated, setHydrated] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [returnLink, setReturnLink] = useState<string | null>(null);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("mode") === "together") setMode("together");
-    setReturnLink(recentRoom());
     setHydrated(true);
   }, []);
   const enterBooth = async () => {
@@ -173,7 +171,7 @@ function Home() {
               aria-pressed={mode === "solo"}
               onClick={() => setMode("solo")}
             >
-              Just me
+              just me
             </button>
             <button
               type="button"
@@ -181,23 +179,13 @@ function Home() {
               aria-pressed={mode === "together"}
               onClick={() => setMode("together")}
             >
-              Together ♡
+              together ♡
             </button>
           </nav>
-          <p className="mt-3 text-sm text-ink-soft" aria-live="polite">
-            {mode === "together"
-              ? "Two places, one photo strip. Live or in your own time."
-              : "Four poses. A little moment for you."}
-          </p>
           {error && (
             <p role="alert" className="together-error">
               {error}
             </p>
-          )}
-          {mode === "together" && returnLink && (
-            <a className="together-text-link" href={returnLink}>
-              Return to our booth →
-            </a>
           )}
         </header>
 
@@ -250,7 +238,7 @@ function Home() {
             </span>
           </span>
           <span className="font-hand mt-2 block text-xl text-ink-soft transition-colors group-hover:text-rust sm:text-2xl">
-            {busy ? "opening your booth…" : "Enter Photo Booth →"}
+            {busy ? "opening your booth…" : "click to step in →"}
           </span>
         </button>
       </div>

@@ -55,7 +55,7 @@ test("two separate browsers create, join, recover, decorate and download a share
   host.on("pageerror", (e) => errors.push(e.message));
   guest.on("pageerror", (e) => errors.push(e.message));
   await host.goto(`${baseURL}/`);
-  await host.getByRole("button", { name: "Together ♡", exact: true }).click();
+  await host.getByRole("button", { name: "together ♡", exact: true }).click();
   await expect(host).toHaveURL(`${baseURL}/`);
   await host.getByRole("button", { name: "Enter Photo Booth", exact: true }).click();
   await expect(host.getByLabel("Together photo booth")).toBeVisible();
@@ -232,7 +232,7 @@ test("camera countdown, cancel, retake and denied-camera upload fallback", async
   const context = await browser.newContext({ permissions: ["camera"] });
   const page = await context.newPage();
   await page.goto(`${baseURL}/?mode=together`);
-  await expect(page.getByRole("button", { name: "Together ♡", exact: true })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: "together ♡", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -316,7 +316,7 @@ test("live cameras, one synchronized countdown, shared cancellation, and guest-f
   h.on("pageerror", (e) => errors.push(e.message));
   g.on("pageerror", (e) => errors.push(e.message));
   await h.goto(`${baseURL}/?mode=together`);
-  await expect(h.getByRole("button", { name: "Together ♡", exact: true })).toHaveAttribute(
+  await expect(h.getByRole("button", { name: "together ♡", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
