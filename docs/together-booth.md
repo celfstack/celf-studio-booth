@@ -99,3 +99,9 @@ across the final focused runs, including independent object dragging, late camer
 activation, guest refresh/reconnection and returning to Solo with a prior shared
 session. TypeScript and the production build passed. Targeted lint has no errors
 and one pre-existing `stripRenderRevision` hook-dependency warning in the editor.
+
+## Strip-only canvas export
+
+The decoration editor offers Just the strip alongside Portrait and Story. It hides paper and layout controls, renders the existing strip upright at 1200 × 3600 before decorations, and exports a PNG with transparent margins trimmed. Frames, filters, lace, stars and gems remain available; the checkerboard is preview-only. Canvas edits retain their choices when switching back to Portrait or Story. The format choice is accepted by the shared editor so both participants can use it. Save renders on a separate canvas to keep selection handles out of downloads. The mobile header keeps Back, Undo and Save on one line.
+
+Verified with a browser test that decodes downloaded PNGs (plain strip, transparent decorated strip, and opaque portrait), seven server tests including shared format persistence, TypeScript, build, and mobile/desktop visual checks.

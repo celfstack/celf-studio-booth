@@ -1,7 +1,7 @@
 import { roomManagementLink } from "../lib/together/client";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { saveImageBlob } from "../lib/download";
+import { cropTransparentCanvas, saveImageBlob } from "../lib/download";
 import { reframeStrip, renderStrip, type BorderStyle, type PrintLook } from "../lib/strip/render";
 import { useSharedEditor } from "../lib/together/editor";
 import { SharedSessionBoundary } from "../lib/together/session-boundary";
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/decorate")({
   ),
 });
 
-type FormatId = "portrait" | "story";
+type FormatId = "portrait" | "story" | "strip";
 type BackdropId =
   "satin" | "bluePaper" | "pinkPaper" | "dots" | "stripes" | "corduroy" | "denim" | "photobooth";
 type EffectId = "original" | "dreamy" | "vintageColor" | "coolMono" | "warmFlash" | "noirPunch";
@@ -86,6 +86,7 @@ interface FormatOption {
 }
 
 const FORMATS: FormatOption[] = [
+  { id: "strip", label: "Just the strip", detail: "Transparent PNG", width: 2160, height: 4800 },
   { id: "portrait", label: "Portrait", detail: "1080 × 1350", width: 1080, height: 1350 },
   { id: "story", label: "Story", detail: "1080 × 1920", width: 1080, height: 1920 },
 ];
@@ -637,9 +638,23 @@ function drawComposition(
   const ctx = canvas.getContext("2d")!;
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-  const backdropTransform = drawPaper(ctx, canvas.width, canvas.height, backdrop, backdropImage);
+  const stripOnly = format.id === "strip";
+  const backdropTransform = stripOnly
+    ? { x: 0, y: 0, scale: 1 }
+    : drawPaper(ctx, canvas.width, canvas.height, backdrop, backdropImage);
 
-  if (backdrop === "photobooth" && backdropImage) {
+  if (stripOnly) {
+    // Keep the original strip resolution, with room around it for decorations.
+    // The transparent margin is trimmed from the final PNG.
+    const h = canvas.height * 0.75;
+    const w = h * (strip.width / strip.height);
+    const x = (canvas.width - w) / 2;
+    const y = (canvas.height - h) / 2;
+    if (decorations.includes("lace") && decorationImages.lace) {
+      drawLaceFrame(ctx, decorationImages.lace, x, y, w, h, 0);
+    }
+    drawImageWithEffect(ctx, strip, 0, 0, strip.width, strip.height, x, y, w, h, effect);
+  } else if (backdrop === "photobooth" && backdropImage) {
     const h = backdropImage.height * 0.49 * backdropTransform.scale;
     const w = h * (strip.width / strip.height);
     const centerX = backdropTransform.x + backdropImage.width * 0.51 * backdropTransform.scale;
@@ -719,6 +734,7 @@ function drawComposition(
 
   if (
     showSelection &&
+    !stripOnly &&
     backdrop !== "photobooth" &&
     layout === "prints" &&
     selectedPrintId != null
@@ -769,6 +785,7 @@ function Decorate() {
   const [downloadRecoveryUrl, setDownloadRecoveryUrl] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const format = FORMATS.find((item) => item.id === formatId)!;
+  const stripOnly = formatId === "strip";
   const ready = stripReady && backdropsReady && decorationsReady;
   const interactionRef = useRef<CanvasInteraction | null>(null);
   const undoHistoryRef = useRef<EditorSnapshot[]>([]);
@@ -1275,7 +1292,7 @@ function Decorate() {
     setSelectedFinish(null);
     setSelectedFinishItemId(null);
 
-    if (layout !== "prints") return;
+    if (stripOnly || layout !== "prints") return;
     let hit =
       selectedPrintId == null ? undefined : loosePrints.find((item) => item.id === selectedPrintId);
     mode = "drag";
@@ -1419,8 +1436,8 @@ function Decorate() {
   const selectedPrint = loosePrints.find((item) => item.id === selectedPrintId);
 
   const save = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !stripImageRef.current) return;
+    if (!canvasRef.current || !stripImageRef.current) return;
+    const canvas = document.createElement("canvas");
     setSaving(true);
     setSaveError(null);
     try {
@@ -1449,8 +1466,9 @@ function Decorate() {
         null,
         false,
       );
+      const exportCanvas = stripOnly ? cropTransparentCanvas(canvas) : canvas;
       const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png", 1),
+        exportCanvas.toBlob(resolve, "image/png", 1),
       );
       if (!blob) throw new Error("Canvas export failed");
 
@@ -1489,16 +1507,19 @@ function Decorate() {
   return (
     <main className="min-h-dvh bg-[#f3eee5] text-ink">
       <header className="sticky top-0 z-30 border-b border-ink/10 bg-paper/90 px-4 py-3 backdrop-blur-md sm:px-7">
-        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-2 sm:gap-4">
           <button
             type="button"
             onClick={() => void navigate({ to: "/print" })}
             className="font-hand text-lg text-ink-soft transition-colors hover:text-rust"
           >
-            ← back to the print
+            <span className="whitespace-nowrap">← back</span>
+            <span className="hidden sm:inline"> to the print</span>
           </button>
           <div className="text-center">
-            <h1 className="font-hand text-2xl tracking-[-.5px] sm:text-3xl">final touches !!</h1>
+            <h1 className="font-hand whitespace-nowrap text-lg tracking-[-.5px] sm:text-3xl">
+              final touches !!
+            </h1>
             <p className="font-type hidden text-[10px] uppercase tracking-[.18em] text-ink-soft sm:block">
               make it yours
             </p>
@@ -1511,7 +1532,7 @@ function Decorate() {
               title="Undo previous action"
               className="rounded-full border border-ink/20 bg-paper px-3.5 py-2.5 font-hand text-sm text-ink transition hover:-translate-y-0.5 hover:border-ink/45 disabled:cursor-not-allowed disabled:opacity-35 sm:px-5"
             >
-              ↶ Undo
+              ↶<span className="sr-only sm:not-sr-only"> Undo</span>
             </button>
             <button
               type="button"
@@ -1522,9 +1543,9 @@ function Decorate() {
                 borderRendering ||
                 (shared.active && (!shared.synced || shared.saving))
               }
-              className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper transition hover:-translate-y-0.5 disabled:opacity-40 sm:px-7"
+              className="whitespace-nowrap rounded-full bg-ink px-3 py-2.5 text-sm font-semibold text-paper transition hover:-translate-y-0.5 disabled:opacity-40 sm:px-7"
             >
-              {saving ? "Saving…" : "Save image"}
+              {saving ? "Saving…" : stripOnly ? "Save strip" : "Save image"}
             </button>
           </div>
         </div>
@@ -1582,8 +1603,18 @@ function Decorate() {
                   onPointerLeave={() => shared.client?.cursor(null)}
                   onPointerUp={endCanvasInteraction}
                   onPointerCancel={endCanvasInteraction}
-                  className={`max-h-[calc(100dvh-12rem)] max-w-full touch-none rounded-[3px] shadow-[0_24px_70px_-25px_rgba(40,28,20,.55)] ${layout === "prints" || decorations.includes("referenceStars") || decorations.includes("bedazzle") ? "cursor-grab active:cursor-grabbing" : ""}`}
-                  style={{ aspectRatio: `${format.width}/${format.height}` }}
+                  className={`max-h-[calc(100dvh-12rem)] max-w-full touch-none rounded-[3px] shadow-[0_24px_70px_-25px_rgba(40,28,20,.55)] ${(!stripOnly && layout === "prints") || decorations.includes("referenceStars") || decorations.includes("bedazzle") ? "cursor-grab active:cursor-grabbing" : ""}`}
+                  style={{
+                    aspectRatio: `${format.width}/${format.height}`,
+                    ...(stripOnly
+                      ? {
+                          backgroundColor: "#fafafa",
+                          backgroundImage:
+                            "conic-gradient(#e5e5e5 25%, transparent 0 50%, #e5e5e5 0 75%, transparent 0)",
+                          backgroundSize: "16px 16px",
+                        }
+                      : {}),
+                  }}
                 />
                 {shared.client?.online &&
                   shared.client.other?.stage === "decorate" &&
@@ -1603,7 +1634,7 @@ function Decorate() {
               </div>
               {(decorations.includes("referenceStars") ||
                 decorations.includes("bedazzle") ||
-                layout === "prints") && (
+                (!stripOnly && layout === "prints")) && (
                 <p className="font-type text-[10px] uppercase tracking-[.13em] text-ink-soft">
                   {decorations.includes("referenceStars") || decorations.includes("bedazzle")
                     ? "Tap a star or gem · drag to move · use the dots to resize or turn"
@@ -1620,8 +1651,8 @@ function Decorate() {
           inert={shared.active && !shared.synced}
           className="space-y-3 pb-10 lg:grid lg:grid-cols-2 lg:content-start lg:gap-2 lg:space-y-0 lg:pb-0"
         >
-          <EditorSection number="01" title="Choose the canvas">
-            <div className="grid grid-cols-2 gap-2">
+          <EditorSection number="01" title="Choose the canvas" className="lg:col-span-2">
+            <div className="grid grid-cols-3 gap-2">
               {FORMATS.map((item) => (
                 <ChoiceButton
                   key={item.id}
@@ -1634,95 +1665,105 @@ function Decorate() {
             </div>
           </EditorSection>
 
-          <EditorSection number="02" title="Arrange the photos">
-            <div className="grid grid-cols-2 gap-2">
-              {LAYOUTS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  aria-pressed={layout === item.id}
-                  onClick={() => {
-                    setLayout(item.id);
-                    setSelectedPrintId(
-                      item.id === "prints" ? (loosePrints.at(-1)?.id ?? null) : null,
-                    );
-                  }}
-                  className={`rounded-xl border px-2 py-3 text-center transition ${layout === item.id ? "border-ink bg-ink text-paper" : "border-ink/15 bg-white/45 hover:border-ink/35"}`}
-                >
-                  <span className="font-type block text-lg leading-none">{item.glyph}</span>
-                  <span className="font-hand mt-1 block text-base">{item.label}</span>
-                </button>
-              ))}
-            </div>
-            {layout === "prints" && (
-              <div className="mt-3 rounded-xl border border-ink/10 bg-white/35 p-3">
-                {selectedPrint ? (
-                  <>
-                    <p className="font-type mb-2 text-[9px] uppercase tracking-[.12em] text-ink-soft">
-                      Editing photo {selectedPrint.photoIndex + 1}
-                    </p>
-                    <div className="grid grid-cols-4 gap-2">
+          {!stripOnly && (
+            <EditorSection number="02" title="Arrange the photos">
+              <div className="grid grid-cols-2 gap-2">
+                {LAYOUTS.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-pressed={layout === item.id}
+                    onClick={() => {
+                      setLayout(item.id);
+                      setSelectedPrintId(
+                        item.id === "prints" ? (loosePrints.at(-1)?.id ?? null) : null,
+                      );
+                    }}
+                    className={`rounded-xl border px-2 py-3 text-center transition ${layout === item.id ? "border-ink bg-ink text-paper" : "border-ink/15 bg-white/45 hover:border-ink/35"}`}
+                  >
+                    <span className="font-type block text-lg leading-none">{item.glyph}</span>
+                    <span className="font-hand mt-1 block text-base">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+              {layout === "prints" && (
+                <div className="mt-3 rounded-xl border border-ink/10 bg-white/35 p-3">
+                  {selectedPrint ? (
+                    <>
+                      <p className="font-type mb-2 text-[9px] uppercase tracking-[.12em] text-ink-soft">
+                        Editing photo {selectedPrint.photoIndex + 1}
+                      </p>
+                      <div className="grid grid-cols-4 gap-2">
+                        <button
+                          type="button"
+                          aria-label="Make photo smaller"
+                          onClick={() =>
+                            updateSelectedPrint({
+                              width: Math.max(0.16, selectedPrint.width - 0.04),
+                            })
+                          }
+                          className="rounded-lg border border-ink/15 bg-paper px-2 py-2 font-hand text-lg"
+                        >
+                          −
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Make photo larger"
+                          onClick={() =>
+                            updateSelectedPrint({
+                              width: Math.min(0.62, selectedPrint.width + 0.04),
+                            })
+                          }
+                          className="rounded-lg border border-ink/15 bg-paper px-2 py-2 font-hand text-lg"
+                        >
+                          ＋
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Rotate photo"
+                          onClick={() =>
+                            updateSelectedPrint({ rotation: selectedPrint.rotation + 8 })
+                          }
+                          className="rounded-lg border border-ink/15 bg-paper px-2 py-2 font-hand text-lg"
+                        >
+                          ↻
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLoosePrints((items) =>
+                              items.filter((item) => item.id !== selectedPrint.id),
+                            );
+                            setSelectedPrintId(null);
+                          }}
+                          className="rounded-lg border border-rust/30 bg-rust/5 px-2 py-2 font-hand text-sm text-rust"
+                        >
+                          delete
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-ink-soft">Tap a photo to edit it.</p>
                       <button
                         type="button"
-                        aria-label="Make photo smaller"
-                        onClick={() =>
-                          updateSelectedPrint({ width: Math.max(0.16, selectedPrint.width - 0.04) })
-                        }
-                        className="rounded-lg border border-ink/15 bg-paper px-2 py-2 font-hand text-lg"
+                        onClick={() => setLoosePrints(DEFAULT_LOOSE_PRINTS)}
+                        className="font-hand text-sm text-rust underline underline-offset-2"
                       >
-                        −
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Make photo larger"
-                        onClick={() =>
-                          updateSelectedPrint({ width: Math.min(0.62, selectedPrint.width + 0.04) })
-                        }
-                        className="rounded-lg border border-ink/15 bg-paper px-2 py-2 font-hand text-lg"
-                      >
-                        ＋
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Rotate photo"
-                        onClick={() =>
-                          updateSelectedPrint({ rotation: selectedPrint.rotation + 8 })
-                        }
-                        className="rounded-lg border border-ink/15 bg-paper px-2 py-2 font-hand text-lg"
-                      >
-                        ↻
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLoosePrints((items) =>
-                            items.filter((item) => item.id !== selectedPrint.id),
-                          );
-                          setSelectedPrintId(null);
-                        }}
-                        className="rounded-lg border border-rust/30 bg-rust/5 px-2 py-2 font-hand text-sm text-rust"
-                      >
-                        delete
+                        restore all
                       </button>
                     </div>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm text-ink-soft">Tap a photo to edit it.</p>
-                    <button
-                      type="button"
-                      onClick={() => setLoosePrints(DEFAULT_LOOSE_PRINTS)}
-                      className="font-hand text-sm text-rust underline underline-offset-2"
-                    >
-                      restore all
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </EditorSection>
+                  )}
+                </div>
+              )}
+            </EditorSection>
+          )}
 
-          <EditorSection number="03" title="Frame the strip" className="lg:col-span-2">
+          <EditorSection
+            number={stripOnly ? "02" : "03"}
+            title="Frame the strip"
+            className="lg:col-span-2"
+          >
             <div
               className="grid grid-cols-3 gap-2"
               role="radiogroup"
@@ -1754,7 +1795,11 @@ function Decorate() {
             ) : null}
           </EditorSection>
 
-          <EditorSection number="04" title="Tune the print">
+          <EditorSection
+            number={stripOnly ? "03" : "04"}
+            title="Tune the print"
+            className={stripOnly ? "lg:col-span-2" : undefined}
+          >
             <div className="flex flex-wrap gap-2">
               {EFFECTS.map((item) => (
                 <button
@@ -1770,39 +1815,45 @@ function Decorate() {
             </div>
           </EditorSection>
 
-          <EditorSection number="05" title="Pick some paper">
-            <div className="grid grid-cols-8 gap-1.5">
-              {BACKDROPS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  title={item.label}
-                  aria-label={item.label}
-                  aria-pressed={backdrop === item.id}
-                  onClick={() => {
-                    setBackdrop(item.id);
-                    if (item.id === "photobooth") {
-                      setLayout("strip");
-                      setSelectedPrintId(null);
-                    }
-                  }}
-                  className={`aspect-square rounded-lg border-2 p-0.5 transition hover:-translate-y-0.5 ${backdrop === item.id ? "border-rust shadow-[0_0_0_2px_#faf6ef,0_0_0_4px_#a03d2e]" : "border-transparent"}`}
-                >
-                  <span
-                    className="block h-full w-full rounded-[5px] border border-ink/15"
-                    style={{
-                      backgroundColor: item.color,
-                      backgroundImage: `url("${item.src}")`,
-                      backgroundPosition: "center",
-                      backgroundSize: "cover",
+          {!stripOnly && (
+            <EditorSection number="05" title="Pick some paper">
+              <div className="grid grid-cols-8 gap-1.5">
+                {BACKDROPS.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    title={item.label}
+                    aria-label={item.label}
+                    aria-pressed={backdrop === item.id}
+                    onClick={() => {
+                      setBackdrop(item.id);
+                      if (item.id === "photobooth") {
+                        setLayout("strip");
+                        setSelectedPrintId(null);
+                      }
                     }}
-                  />
-                </button>
-              ))}
-            </div>
-          </EditorSection>
+                    className={`aspect-square rounded-lg border-2 p-0.5 transition hover:-translate-y-0.5 ${backdrop === item.id ? "border-rust shadow-[0_0_0_2px_#faf6ef,0_0_0_4px_#a03d2e]" : "border-transparent"}`}
+                  >
+                    <span
+                      className="block h-full w-full rounded-[5px] border border-ink/15"
+                      style={{
+                        backgroundColor: item.color,
+                        backgroundImage: `url("${item.src}")`,
+                        backgroundPosition: "center",
+                        backgroundSize: "cover",
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </EditorSection>
+          )}
 
-          <EditorSection number="06" title="Choose a finish" className="lg:col-span-2">
+          <EditorSection
+            number={stripOnly ? "04" : "06"}
+            title="Choose a finish"
+            className="lg:col-span-2"
+          >
             <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
               {DECORATIONS.map((item) => (
                 <button
@@ -1871,7 +1922,7 @@ function Decorate() {
             }
             className="w-full rounded-2xl bg-ink px-6 py-3 text-base font-semibold text-paper shadow-[0_12px_30px_-16px_rgba(42,36,30,.7)] transition hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-40 lg:col-span-2"
           >
-            {saving ? "Saving…" : "Save image"}
+            {saving ? "Saving…" : stripOnly ? "Save strip" : "Save image"}
           </button>
           {downloadRecoveryUrl ? (
             <a

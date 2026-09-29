@@ -149,12 +149,13 @@ test("guest may finish before the host; shared state merges independent changes 
   await syncRoom(id, token, { presence });
   await syncRoom(id, guest, { presence: { ...presence, instance: randomUUID() } });
   const [a, b] = await Promise.all([
-    syncRoom(id, token, { start: true, editor: { effect: "dreamy" } }),
+    syncRoom(id, token, { start: true, editor: { effect: "dreamy", formatId: "strip" } }),
     syncRoom(id, guest, { start: true, editor: { backdrop: "satin" } }),
   ]);
   assert.equal(a.state.capture.id, b.state.capture.id);
   const state = (await syncRoom(id, guest, {})).state;
   assert.equal(state.editor.effect, "dreamy");
+  assert.equal(state.editor.formatId, "strip");
   assert.equal(state.editor.backdrop, "satin");
   assert.ok(state.capture.startAt > Date.now() + 3000);
   assert.equal((await syncRoom(id, guest, { cancel: true })).state.capture.cancelled, true);

@@ -62,3 +62,40 @@ export async function saveImageBlob(blob: Blob, filename: string): Promise<Image
   link.remove();
   return { status: "downloaded", url };
 }
+
+/** Remove empty canvas margins without flattening PNG transparency or clipping decorations. */
+export function cropTransparentCanvas(source: HTMLCanvasElement): HTMLCanvasElement {
+  const { width, height } = source;
+  const pixels = source.getContext("2d")!.getImageData(0, 0, width, height).data;
+  let left = width,
+    top = height,
+    right = -1,
+    bottom = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (pixels[(y * width + x) * 4 + 3] === 0) continue;
+      left = Math.min(left, x);
+      top = Math.min(top, y);
+      right = Math.max(right, x);
+      bottom = Math.max(bottom, y);
+    }
+  }
+  if (right < left) return source;
+  const cropped = document.createElement("canvas");
+  cropped.width = right - left + 1;
+  cropped.height = bottom - top + 1;
+  cropped
+    .getContext("2d")!
+    .drawImage(
+      source,
+      left,
+      top,
+      cropped.width,
+      cropped.height,
+      0,
+      0,
+      cropped.width,
+      cropped.height,
+    );
+  return cropped;
+}

@@ -26,7 +26,7 @@ const finishEntity = z
   .strict()
   .nullable();
 const choices: Record<string, string[]> = {
-  formatId: ["portrait", "story"],
+  formatId: ["portrait", "story", "strip"],
   backdrop: [
     "satin",
     "bluePaper",
