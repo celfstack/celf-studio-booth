@@ -2,8 +2,7 @@
 
 ## Experience
 
-The original homepage has Just me / Together buttons and one Enter Photo Booth
-button. Together creates a private room immediately. `/together` redirects back
+The homepage has lowercase just me / together buttons and the original click to step in action. Together creates a private room immediately. `/together` redirects back
 to the homepage with Together selected; there is no separate landing or name gate.
 The original solo camera, printing, backgrounds, filters and decoration tools remain.
 
@@ -20,8 +19,7 @@ can save first and use the same invitation for the other to finish later.
 
 Once both halves are saved, both devices automatically open the existing strip
 developing screen. Returning through the invitation also goes straight there.
-The explicit “back to our booth” action keeps invite/privacy controls accessible
-without showing an extra completed-strip page. From the print, both can open the
+The explicit “back to our booth” action reopens the camera with saved thumbnails and the invite button. The old return-link/privacy panel has been removed. From the print, both can open the
 existing decoration editor.
 Canvas, layout, border, effect, paper and individual stars/gems/prints are shared.
 Named cursors show where the other person is working. Each device can download;
@@ -73,16 +71,14 @@ side, see saved photos and delete the room; share invitations privately.
 ## Deployment requirements
 
 1. Link Vercel project `celf-studio-booth` in team `celfstudio`.
-2. Complete Upstash Marketplace terms as the account owner, connect a Redis store,
-   and provision its server-only environment variables for preview/production.
+2. Upstash Redis resource celf-together is connected to production, preview and development. The Free plan was selected with automatic upgrades disabled; KV_REST_API_URL/TOKEN are provisioned by Vercel.
 3. Set server-only `TURN_KEY_ID` and `TURN_API_TOKEN` for a Cloudflare Realtime TURN
    key. The API issues one-hour relay credentials. Without these, STUN can connect
    compatible networks, but restrictive networks may need the turn-taking flow.
 4. Deploy, then verify the real invite on two devices on separate networks,
    including a TURN-relayed connection. Localhost invites only work on one machine.
 
-Vercel is already linked/authenticated. As of this implementation, storage terms
-and production TURN credentials remain unconfigured; no deployment was made.
+Vercel is linked/authenticated and the storage terms are accepted. Production Redis was verified with both contributions, shared edits, an atomic countdown, and cleanup. TURN relay credentials remain unconfigured; direct STUN connections and asynchronous contributions are available.
 Cloudflare reference: https://developers.cloudflare.com/realtime/turn/generate-credentials/
 
 ## Verification
@@ -109,3 +105,5 @@ Verified with a browser test that decodes downloaded PNGs (plain strip, transpar
 ## Returning to a completed booth
 
 Explicit back-to-booth links now show the same camera interface even after a contribution has been saved. The saved photo thumbnails and Return to our strip action remain available. The star becomes Take another strip, which creates a fresh booth and invitation while preserving the previous room/photos/decorations. Saved contributions cannot be accidentally resubmitted or overwritten; shared countdown events are ignored in the completed camera view. The fresh booth starts with the usual empty capture slots. Verified in the complete two-browser create/join/decorate/download flow, including camera return, reopening the existing strip, starting another booth, and recovering the untouched original. TypeScript, targeted lint and production build passed.
+
+Release verification: all 13 browser tests, all 7 server tests and the production build passed. GitHub feature branch pushed; release published through main after production storage verification.
