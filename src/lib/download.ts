@@ -1,66 +1,65 @@
-export type ImageSaveResult =
-  | { status: "downloaded"; url: string }
-  | { status: "shared" }
-  | { status: "cancelled" }
-  | { status: "manual"; url: string };
+export type ImageSaveResult = { status: "downloaded" | "shared" | "manual"; url: string };
 
-function isAppleTouchDevice() {
-  const userAgent = navigator.userAgent;
+function needsMobileSave() {
   return (
-    /iPad|iPhone|iPod/.test(userAgent) ||
+    /Android|Mobile|iPad|iPhone|iPod|FBAN|FBAV|Instagram|TikTok|Line\/|MicroMessenger|Twitter|\bwv\b/i.test(
+      navigator.userAgent,
+    ) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
   );
 }
 
-function isRestrictedInAppBrowser() {
-  return /FBAN|FBAV|Instagram|TikTok|Line\/|MicroMessenger|Twitter|\bwv\b/i.test(
-    navigator.userAgent,
-  );
-}
-
-function isLikelyMobileDevice() {
-  return /Android|Mobile/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
-}
-
-function isAbortError(error: unknown) {
-  return error instanceof DOMException && error.name === "AbortError";
-}
-
-/**
- * Saves a generated image without relying on the download attribute on iOS,
- * where blob URL downloads are frequently ignored. The caller owns returned
- * URLs and must revoke them when its fallback or recovery link is discarded.
- */
+/** Saves without treating a share-sheet result as proof that a file was saved.
+ * Every outcome retains a URL for the caller's fallback/recovery UI.
+ * The caller owns that URL and revokes it when the UI is discarded. */
 export async function saveImageBlob(blob: Blob, filename: string): Promise<ImageSaveResult> {
-  const needsMobileFallback =
-    isAppleTouchDevice() || isLikelyMobileDevice() || isRestrictedInAppBrowser();
-
-  if (needsMobileFallback && typeof navigator.share === "function") {
-    const file = new File([blob], filename, { type: blob.type || "image/png" });
-    const shareData = { files: [file], title: "Celf Studio photo" };
-
-    if (typeof navigator.canShare === "function" && navigator.canShare(shareData)) {
-      try {
-        await navigator.share(shareData);
-        return { status: "shared" };
-      } catch (error) {
-        if (isAbortError(error)) return { status: "cancelled" };
-        // Fall through to a full-size image the user can press and hold to save.
+  if (!blob.size) throw new Error("The image is empty");
+  const mobile = needsMobileSave();
+  if (mobile && typeof navigator.share === "function") {
+    try {
+      const file = new File([blob], filename, { type: blob.type || "image/png" });
+      // Only test the file capability; optional metadata varies between browsers.
+      if (
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [file] }) &&
+        (!navigator.userActivation || navigator.userActivation.isActive)
+      ) {
+        const sharing = navigator.share({ files: [file] });
+        // Some embedded browsers expose a nonfunctional share method.
+        if (sharing && typeof sharing.then === "function") {
+          await sharing;
+          return { status: "shared", url: URL.createObjectURL(blob) };
+        }
       }
+    } catch (error) {
+      // AbortError also means no share targets, so never silently abandon the save.
+      // Log only the failure type, never photos, filenames, or invitation links.
+      if (!(error instanceof DOMException && error.name === "AbortError"))
+        console.warn(
+          "[photo-save] Native sharing unavailable; showing save options.",
+          error instanceof Error ? error.name : "UnknownError",
+        );
     }
   }
 
   const url = URL.createObjectURL(blob);
-  if (needsMobileFallback) return { status: "manual", url };
+  if (mobile) return { status: "manual", url };
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.rel = "noopener";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  return { status: "downloaded", url };
+  try {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    try {
+      link.click();
+    } finally {
+      link.remove();
+    }
+    return { status: "downloaded", url };
+  } catch {
+    return { status: "manual", url };
+  }
 }
 
 /** Remove empty canvas margins without flattening PNG transparency or clipping decorations. */

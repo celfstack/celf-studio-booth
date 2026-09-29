@@ -94,7 +94,7 @@ function Print() {
           return result.url;
         });
         setViewerOpen(true);
-      } else if (result.status === "downloaded") {
+      } else {
         setDownloadRecoveryUrl((current) => {
           if (current) URL.revokeObjectURL(current);
           return result.url;
@@ -122,9 +122,14 @@ function Print() {
   useEffect(
     () => () => {
       if (manualSaveUrl) URL.revokeObjectURL(manualSaveUrl);
+    },
+    [manualSaveUrl],
+  );
+  useEffect(
+    () => () => {
       if (downloadRecoveryUrl) URL.revokeObjectURL(downloadRecoveryUrl);
     },
-    [downloadRecoveryUrl, manualSaveUrl],
+    [downloadRecoveryUrl],
   );
 
   const onTakeAnother = useCallback(() => {
@@ -247,13 +252,33 @@ function Print() {
           <img
             src={manualSaveUrl ?? stripUrl}
             alt="Photo strip of four contrasty sepia frames with a celfstudio footer"
-            className="max-h-[76dvh] w-auto rounded-[4px] shadow-[0_40px_90px_-20px_rgba(0,0,0,0.9)]"
+            className="min-h-0 max-h-[65dvh] w-auto rounded-[4px] shadow-[0_40px_90px_-20px_rgba(0,0,0,0.9)]"
             onClick={(e) => e.stopPropagation()}
           />
           {manualSaveUrl || downloadError ? (
-            <p className="max-w-sm text-center text-sm text-paper">
-              Press and hold the image, then choose Save to Photos or Save to Files.
-            </p>
+            <div
+              className="max-w-sm text-center text-sm text-paper"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p>Press and hold the photo to save it, or download the file.</p>
+              <div className="mt-3 flex flex-wrap justify-center gap-4">
+                <a
+                  href={manualSaveUrl ?? stripUrl}
+                  download={`celf-studio-${stripDateLabel().toLowerCase().replaceAll(" ", "-")}.png`}
+                  className="underline underline-offset-4"
+                >
+                  Download file
+                </a>
+                <a
+                  href={manualSaveUrl ?? stripUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  Open full-size image
+                </a>
+              </div>
+            </div>
           ) : null}
           <div
             className="flex flex-col items-center justify-center gap-3"

@@ -781,6 +781,7 @@ function Decorate() {
   const [backdropsReady, setBackdropsReady] = useState(false);
   const [decorationsReady, setDecorationsReady] = useState(false);
   const [saving, setSaving] = useState(false);
+  const preparedSaveRef = useRef<{ blob: Blob; filename: string } | null>(null);
   const [manualSaveUrl, setManualSaveUrl] = useState<string | null>(null);
   const [downloadRecoveryUrl, setDownloadRecoveryUrl] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -861,9 +862,14 @@ function Decorate() {
   useEffect(
     () => () => {
       if (manualSaveUrl) URL.revokeObjectURL(manualSaveUrl);
+    },
+    [manualSaveUrl],
+  );
+  useEffect(
+    () => () => {
       if (downloadRecoveryUrl) URL.revokeObjectURL(downloadRecoveryUrl);
     },
-    [downloadRecoveryUrl, manualSaveUrl],
+    [downloadRecoveryUrl],
   );
 
   const undo = useCallback(() => {
@@ -1472,22 +1478,9 @@ function Decorate() {
       );
       if (!blob) throw new Error("Canvas export failed");
 
-      const result = await saveImageBlob(blob, `celf-studio-decorated-${formatId}.png`);
-      if (result.status === "manual") {
-        setDownloadRecoveryUrl((current) => {
-          if (current) URL.revokeObjectURL(current);
-          return null;
-        });
-        setManualSaveUrl((current) => {
-          if (current) URL.revokeObjectURL(current);
-          return result.url;
-        });
-      } else if (result.status === "downloaded") {
-        setDownloadRecoveryUrl((current) => {
-          if (current) URL.revokeObjectURL(current);
-          return result.url;
-        });
-      }
+      const filename = `celf-studio-decorated-${formatId}.png`;
+      preparedSaveRef.current = { blob, filename };
+      await savePreparedImage(blob, filename);
     } catch {
       setSaveError("Your browser could not save this image. Please try again.");
     } finally {
@@ -1496,7 +1489,40 @@ function Decorate() {
     }
   };
 
+  const savePreparedImage = async (blob: Blob, filename: string) => {
+    const result = await saveImageBlob(blob, filename);
+    if (result.status === "manual") {
+      setDownloadRecoveryUrl((current) => {
+        if (current) URL.revokeObjectURL(current);
+        return null;
+      });
+      setManualSaveUrl((current) => {
+        if (current) URL.revokeObjectURL(current);
+        return result.url;
+      });
+    } else {
+      setDownloadRecoveryUrl((current) => {
+        if (current) URL.revokeObjectURL(current);
+        return result.url;
+      });
+    }
+  };
+
+  const retrySave = async () => {
+    if (!preparedSaveRef.current || saving) return;
+    setSaving(true);
+    try {
+      const { blob, filename } = preparedSaveRef.current;
+      await savePreparedImage(blob, filename);
+    } catch {
+      setSaveError("Sharing is unavailable. Download the file or press and hold the photo.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const closeManualSave = () => {
+    preparedSaveRef.current = null;
     setSaveError(null);
     setManualSaveUrl((current) => {
       if (current) URL.revokeObjectURL(current);
@@ -1962,10 +1988,29 @@ function Decorate() {
             ) : null}
             <p className="text-sm text-ink-soft">
               {manualSaveUrl
-                ? "Press and hold the image, then choose Save to Photos or Save to Files."
+                ? "Press and hold the photo to save it, or download the file."
                 : saveError}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
+              {manualSaveUrl && (
+                <>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => void retrySave()}
+                    className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-paper disabled:opacity-40"
+                  >
+                    {saving ? "Opening…" : "Share / save"}
+                  </button>
+                  <a
+                    href={manualSaveUrl}
+                    download={preparedSaveRef.current?.filename ?? "celf-studio.png"}
+                    className="underline underline-offset-4"
+                  >
+                    Download file
+                  </a>
+                </>
+              )}
               {manualSaveUrl ? (
                 <a
                   href={manualSaveUrl}
