@@ -214,6 +214,24 @@ test("two separate browsers create, join, recover, decorate and download a share
   await guest.getByRole("button", { name: "back to our booth", exact: true }).first().click();
   await expect(guest).toHaveURL(/manage=(1|true)/);
   await expect(guest.getByRole("button", { name: "Return to our strip →" })).toBeVisible();
+  await expect(guest.getByLabel("Together photo booth")).toBeVisible();
+  await expect(guest.getByLabel("Your mirrored camera preview")).toBeVisible();
+  await expect(guest.getByRole("button", { name: "Review photo 1" }).locator("img")).toBeVisible();
+  await guest.getByRole("button", { name: "Return to our strip →" }).click();
+  await expect(guest).toHaveURL(/\/print$/);
+  await guest.getByRole("button", { name: "back to our booth", exact: true }).first().click();
+  await expect(guest.getByLabel("Your mirrored camera preview")).toBeVisible();
+  await guest.screenshot({ path: "test-results/together-return-camera.png", fullPage: true });
+  const previousRoom = new URL(invite).pathname;
+  await guest.getByRole("button", { name: "Take another strip", exact: true }).click();
+  await expect.poll(() => new URL(guest.url()).pathname).not.toBe(previousRoom);
+  await expect(guest.getByLabel("Together photo booth")).toBeVisible();
+  await expect(
+    guest.getByRole("button", { name: "Take my four photos", exact: true }),
+  ).toBeEnabled();
+  await host.goto(returnLink);
+  await expect(host).toHaveURL(/\/print$/, { timeout: 15000 });
+
   await expect(guest.getByText("Your return link & privacy", { exact: true })).toHaveCount(0);
   // Room deletion remains covered through the API after removing the privacy panel.
   const deleted = await guest.evaluate(async (link) => {

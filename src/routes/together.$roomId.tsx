@@ -153,8 +153,23 @@ function SharedBooth() {
       cancelled = true;
     };
   }, [complete, manage, photos, openStrip, retry]);
+  async function startAnotherBooth() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const next = await roomApi<{ id: string; token: string }>("", "", "POST", {});
+      rememberRoom(next.id, next.token, "host");
+      // A new booth preserves both people's finished photos and decorations.
+      // Use a document navigation to release the old room's camera and live connection.
+      window.location.assign(roomLink(next.id, "host", next.token));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start another booth. Try again.");
+      setBusy(false);
+    }
+  }
   const submitted = room ? Boolean(room[room.role]) : false;
-  const canCapture = room && !submitted;
+  const canCapture = room && (!submitted || manage);
   const invite = room?.inviteToken ? roomLink(roomId, "guest", room.inviteToken) : "";
   const ownLink = room ? roomLink(roomId, room.role, token) : "";
 
@@ -227,9 +242,12 @@ function SharedBooth() {
         )}
         {canCapture && (
           <Capture
-            key={room.role}
+            key={`${room.id}:${room.role}`}
             room={room}
             token={token}
+            savedPhotos={submitted ? photos[room.role] : undefined}
+            restarting={busy}
+            onStartAnother={() => void startAnotherBooth()}
             partnerPhotos={room.role === "host" ? photos.guest : photos.host}
             live={live}
             name={nickname}
@@ -331,6 +349,9 @@ function Capture({
   room,
   token,
   partnerPhotos,
+  savedPhotos,
+  restarting,
+  onStartAnother,
   live,
   name,
   onShared,
@@ -338,6 +359,9 @@ function Capture({
   room: RoomView;
   token: string;
   partnerPhotos: string[];
+  savedPhotos?: string[];
+  restarting: boolean;
+  onStartAnother: () => void;
   live: LiveRoomHook;
   name: string;
   onShared: (room: RoomView) => void;
@@ -346,7 +370,8 @@ function Capture({
   liveRef.current = live;
   const seenCapture = useRef("");
   const activeCapture = useRef(false);
-  const [shots, setShots] = useState<string[]>([]);
+  const saved = Boolean(savedPhotos);
+  const [shots, setShots] = useState<string[]>(() => savedPhotos ?? []);
   const [selected, setSelected] = useState(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [opening, setOpening] = useState(false);
@@ -407,13 +432,13 @@ function Capture({
     }
   }, [cameraOn]);
   useEffect(() => {
-    if (!shots.length) return;
+    if (saved || !shots.length) return;
     const warn = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [shots.length]);
+  }, [saved, shots.length]);
   async function startCamera() {
     if (opening || cameraOn) return;
     const current = ++openingRun.current;
@@ -465,7 +490,7 @@ function Capture({
     }
   }, [live.client]);
   async function capture(startAt?: number) {
-    if (shooting || !video.current || !cameraOn) return;
+    if (saved || shooting || !video.current || !cameraOn) return;
     const generation = ++run.current;
     const indices = startAt
       ? [0, 1, 2, 3]
@@ -547,7 +572,7 @@ function Capture({
     }
   }
   async function submit() {
-    if (busy || !complete) return;
+    if (saved || busy || !complete) return;
     setBusy(true);
     setError("");
     stopCamera();
@@ -568,6 +593,7 @@ function Capture({
   const captureRef = useRef(capture);
   captureRef.current = capture;
   useEffect(() => {
+    if (saved) return;
     const plan = live.state.capture;
     if (plan?.cancelled || (activeCapture.current && !live.connected)) {
       if (activeCapture.current) cancel();
@@ -586,7 +612,7 @@ function Capture({
     }
     if (!cameraOn) return;
     void captureRef.current(plan.startAt);
-  }, [live.state.capture, live.connected, live.client, cameraOn, cancel]);
+  }, [saved, live.state.capture, live.connected, live.client, cameraOn, cancel]);
   const remoteVideo = useRef<HTMLVideoElement>(null);
   const remoteCamera =
     live.connected && live.client?.online && live.client.other?.camera && live.remoteStream;
@@ -652,27 +678,35 @@ function Capture({
 
   const sharedShutter =
     cameraOn && live.connected && Boolean(live.client?.other?.camera) && !complete;
-  const shutterLabel = shooting
-    ? "Taking photos"
-    : complete && !cameraOn
-      ? "Save my half →"
-      : sharedShutter
-        ? "Start together"
-        : complete
-          ? `Retake photo ${selected + 1}`
-          : shots.some(Boolean)
-            ? "Continue my photos"
-            : "Take my four photos";
-  const shutterText = shooting
-    ? "here we go"
-    : complete && !cameraOn
-      ? "save my half →"
-      : sharedShutter
-        ? "start together"
-        : complete
-          ? `retake photo ${selected + 1}`
-          : "press to start";
+  const shutterLabel = saved
+    ? "Take another strip"
+    : shooting
+      ? "Taking photos"
+      : complete && !cameraOn
+        ? "Save my half →"
+        : sharedShutter
+          ? "Start together"
+          : complete
+            ? `Retake photo ${selected + 1}`
+            : shots.some(Boolean)
+              ? "Continue my photos"
+              : "Take my four photos";
+  const shutterText = saved
+    ? "take another strip"
+    : shooting
+      ? "here we go"
+      : complete && !cameraOn
+        ? "save my half →"
+        : sharedShutter
+          ? "start together"
+          : complete
+            ? `retake photo ${selected + 1}`
+            : "press to start";
   const shutter = () => {
+    if (saved) {
+      onStartAnother();
+      return;
+    }
     if (!cameraOn) {
       if (complete) void submit();
     } else if (sharedShutter) void live.client?.capture().catch((e) => setError(e.message));
@@ -721,7 +755,7 @@ function Capture({
             {error}
           </p>
         )}
-        {live.connected && !shooting && (
+        {!saved && live.connected && !shooting && (
           <button
             className="paired-ready"
             aria-pressed={ready}
@@ -737,6 +771,7 @@ function Capture({
             aria-label={shutterLabel}
             disabled={
               shooting ||
+              restarting ||
               busy ||
               opening ||
               (!cameraOn && !complete) ||
@@ -745,7 +780,9 @@ function Capture({
             onClick={shutter}
           >
             <ShutterStar />
-            <span className="font-hand text-2xl text-ink">{busy ? "saving…" : shutterText}</span>
+            <span className="font-hand text-2xl text-ink">
+              {restarting ? "opening booth…" : busy ? "saving…" : shutterText}
+            </span>
           </button>
           <div className="paired-secondary-actions">
             {shooting ? (
@@ -798,9 +835,11 @@ function Capture({
           aria-label="Upload four photos"
           onChange={(e) => void uploadPhotos(e)}
         />
-        <button disabled={busy || opening || shooting} onClick={() => upload.current?.click()}>
-          {busy ? "opening photos…" : "upload photos →"}
-        </button>
+        {!saved && (
+          <button disabled={busy || opening || shooting} onClick={() => upload.current?.click()}>
+            {busy ? "opening photos…" : "upload photos →"}
+          </button>
+        )}
       </div>
     </>
   );
