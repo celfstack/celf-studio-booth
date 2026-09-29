@@ -103,11 +103,18 @@ export class LiveRoom {
         );
         this.offset = result.now - (sent + Date.now()) / 2;
         this.emit({ state: result.state, error: this.peerError, synced: true });
-        void this.connect().catch(() =>
+        void this.connect().catch((error: unknown) => {
+          // Keep SDP, room tokens, IP addresses and media out of diagnostics.
+          console.warn("[together:live] negotiation failed", {
+            error: error instanceof Error ? error.name : "UnknownError",
+            connection: this.pc?.connectionState,
+            signaling: this.pc?.signalingState,
+          });
+          this.peerError = "Live connection interrupted. Retry live, or take your half for later.";
           this.emit({
-            error: "Live connection interrupted. Retry live, or take your half for later.",
-          }),
-        );
+            error: this.peerError,
+          });
+        });
         return result;
       } catch (error) {
         if (error instanceof ApiError && [403, 404, 410].includes(error.status)) {
@@ -190,6 +197,13 @@ export class LiveRoom {
           this.emit({ connected: this.presence.connected });
           if (this.presence.connected) this.peerError = "";
           if (["failed", "disconnected"].includes(pc.connectionState)) {
+            console.warn("[together:live] connection interrupted", {
+              connection: pc.connectionState,
+              ice: pc.iceConnectionState,
+              relayConfigured: this.ice?.some((server) =>
+                [server.urls].flat().some((url) => /^turns?:/.test(url)),
+              ),
+            });
             this.presence.ready = false;
             this.peerError =
               "Live connection interrupted. Retry live, or take your half for later.";

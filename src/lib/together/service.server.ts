@@ -73,8 +73,13 @@ function parse<T>(schema: z.ZodType<T>, value: unknown): T {
 }
 export async function createRoom(input: unknown, ip: string) {
   const { name } = parse(z.object({ name: nameSchema.default("Our booth") }), input);
-  if ((await incrementWindow(`celf:together:rate:create:${hash(ip)}`, 3600)) > 10)
-    throw new RoomError(429, "A few too many booths. Please try again in an hour.");
+  // Retakes, reconnects and multiple people sharing Wi-Fi must not exhaust an
+  // hour-long allowance. Keep a bounded burst limit with a short recovery window.
+  if ((await incrementWindow(`celf:together:rate:create:v2:${hash(ip)}`, 600)) > 30)
+    throw new RoomError(
+      429,
+      "Lots of booths just opened. Try again in a few minutes, or reopen your existing invite.",
+    );
   const id = randomBytes(16).toString("hex");
   const hostToken = randomBytes(32).toString("hex");
   const now = Date.now();

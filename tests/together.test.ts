@@ -118,10 +118,15 @@ test("cross-origin requests, oversized bodies and private response caching", asy
   });
   await assert.rejects(readBody(malformed), { status: 400 });
 });
-test("creation has a fixed-window rate limit", async () => {
+test("creation allows repeated retakes but still limits bursts per network", async () => {
   const ip = randomUUID();
-  for (let i = 0; i < 10; i++) await createRoom({ name: "Test" }, ip);
+  const rooms = [];
+  for (let i = 0; i < 30; i++) rooms.push(await createRoom({ name: "Test" }, ip));
   await assert.rejects(createRoom({ name: "Test" }, ip), { status: 429 });
+  // Hitting the creation limit must not block using an existing invitation.
+  assert.equal(((await readRoom(rooms[0].id, rooms[0].token)) as RoomView).role, "host");
+  const otherNetwork = await createRoom({}, randomUUID());
+  for (const room of [...rooms, otherNetwork]) await removeRoom(room.id, room.token);
 });
 test("guest may finish before the host; shared state merges independent changes and enforces readiness", async () => {
   const { syncRoom } = await import("../src/lib/together/live.server");

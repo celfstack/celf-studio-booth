@@ -351,6 +351,21 @@ test("live cameras, one synchronized countdown, shared cancellation, and guest-f
 }) => {
   const hc = await browser.newContext({ permissions: ["camera"] });
   const gc = await browser.newContext({ permissions: ["camera"] });
+  // Run with CELF_TEST_FORCE_RELAY=1 to rule out same-network shortcuts.
+  const forceRelay = process.env.CELF_TEST_FORCE_RELAY === "1";
+  for (const context of [hc, gc]) {
+    await context.addInitScript((relay) => {
+      const peers: RTCPeerConnection[] = [];
+      (window as typeof window & { __celfTestPeers: RTCPeerConnection[] }).__celfTestPeers = peers;
+      const NativePeer = window.RTCPeerConnection;
+      window.RTCPeerConnection = class extends NativePeer {
+        constructor(config?: RTCConfiguration) {
+          super({ ...config, ...(relay ? { iceTransportPolicy: "relay" as const } : {}) });
+          peers.push(this);
+        }
+      };
+    }, forceRelay);
+  }
   const h = await hc.newPage(),
     g = await gc.newPage();
   const errors: string[] = [];
@@ -380,6 +395,26 @@ test("live cameras, one synchronized countdown, shared cancellation, and guest-f
     await expect
       .poll(() => remote.evaluate((v: HTMLVideoElement) => v.readyState))
       .toBeGreaterThanOrEqual(2);
+    await expect
+      .poll(async () =>
+        page.evaluate(async (relay) => {
+          const peers = (window as typeof window & { __celfTestPeers: RTCPeerConnection[] })
+            .__celfTestPeers;
+          const pc = peers.findLast((peer) => peer.connectionState === "connected");
+          if (!pc) return false;
+          const stats = await pc.getStats();
+          let hasFrames = false;
+          let relayed = false;
+          stats.forEach((entry) => {
+            if (entry.type === "inbound-rtp" && entry.kind === "video" && entry.framesDecoded > 0)
+              hasFrames = true;
+            if (entry.type === "candidate-pair" && entry.state === "succeeded" && entry.nominated)
+              relayed = stats.get(entry.localCandidateId)?.candidateType === "relay";
+          });
+          return hasFrames && (!relay || relayed);
+        }, forceRelay),
+      )
+      .toBe(true);
     await page.getByRole("button", { name: "I'm ready", exact: true }).click();
   }
   await expect(h.getByRole("button", { name: "Start together", exact: true })).toBeEnabled();
