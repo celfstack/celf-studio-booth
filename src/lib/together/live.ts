@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getTogetherRound } from "../strip/session";
 import { roomApi, ApiError } from "./client";
 import type { Presence, RoomCredentials, SharedState, Signal, SyncResult } from "./live-types";
 export interface LiveView {
@@ -40,10 +41,12 @@ export class LiveRoom {
   private ice?: RTCIceServer[];
   private cursorAt = 0;
   private peerError = "";
+  private editRound?: number;
   constructor(
     readonly credentials: RoomCredentials,
     stage: "booth" | "decorate",
   ) {
+    if (stage === "decorate") this.editRound = getTogetherRound() ?? 0;
     let name = "";
     try {
       name = localStorage.getItem(`celf-name:${credentials.id}:${credentials.role}`) || "";
@@ -91,6 +94,7 @@ export class LiveRoom {
     void tick();
   }
   update(update: Record<string, unknown>): Promise<SyncResult> {
+    const round = this.editRound ?? (this.view.state.round || 0);
     const task = async () => {
       if (this.disposed) throw new Error("Room closed");
       const sent = Date.now();
@@ -99,8 +103,9 @@ export class LiveRoom {
           `/${this.credentials.id}/sync`,
           this.credentials.token,
           "POST",
-          update,
+          { ...update, round },
         );
+        if ((result.state.round || 0) !== (this.view.state.round || 0)) this.presence.ready = false;
         this.offset = result.now - (sent + Date.now()) / 2;
         this.emit({ state: result.state, error: this.peerError, synced: true });
         void this.connect().catch((error: unknown) => {

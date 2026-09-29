@@ -6,6 +6,7 @@ export interface Contribution {
   submissionId: string;
 }
 export interface RoomMeta {
+  round?: number;
   id: string;
   name: string;
   createdAt: number;
@@ -14,6 +15,7 @@ export interface RoomMeta {
   guestHash: string;
 }
 export interface RoomView {
+  round: number;
   id: string;
   name: string;
   createdAt: number;

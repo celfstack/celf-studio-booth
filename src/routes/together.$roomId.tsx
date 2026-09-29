@@ -11,7 +11,12 @@ import {
 import { useLiveRoom, type LiveRoomHook } from "../lib/together/live";
 import type { RoomPhotos, RoomView } from "../lib/together/types";
 import { decodePhoto, isSupportedPhotoFile } from "../lib/strip/render";
-import { resetSession, setSessionPhotos, setTogetherLink } from "../lib/strip/session";
+import {
+  resetSession,
+  setSessionPhotos,
+  setTogetherLink,
+  setTogetherRound,
+} from "../lib/strip/session";
 
 export const Route = createFileRoute("/together/$roomId")({
   validateSearch: (search: Record<string, unknown>): { manage?: boolean } => ({
@@ -43,6 +48,7 @@ function SharedBooth() {
   const [copied, setCopied] = useState("");
   const [retry, setRetry] = useState(0);
   const photosVersion = useRef("");
+  const observedRound = useRef<number | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -70,7 +76,12 @@ function SharedBooth() {
         if (document.hidden) return;
         const next = await roomApi<RoomView>(`/${roomId}`, token);
         if (cancelled) return;
-        const version = `${next.host?.submittedAt || 0}:${next.guest?.submittedAt || 0}`;
+        if (observedRound.current !== null && next.round !== observedRound.current) {
+          window.location.replace(roomLink(roomId, next.role, token));
+          return;
+        }
+        observedRound.current = next.round;
+        const version = `${next.round}:${next.host?.submittedAt || 0}:${next.guest?.submittedAt || 0}`;
         if (photosVersion.current !== version) {
           const images = await roomApi<RoomPhotos>(`/${roomId}?photos=1`, token);
           if (cancelled) return;
@@ -105,6 +116,10 @@ function SharedBooth() {
   }, [roomId, token, retry]);
 
   const live = useLiveRoom(room && token ? { id: roomId, token, role: room.role } : null);
+  useEffect(() => {
+    if (room && live.synced && (live.state.round || 0) > room.round)
+      window.location.replace(roomLink(roomId, room.role, token));
+  }, [room, roomId, token, live.synced, live.state.round]);
   const [nickname, setNickname] = useState("");
   useEffect(() => {
     if (live.client) setNickname(live.client.presence.name);
@@ -131,6 +146,7 @@ function SharedBooth() {
         if (isCancelled()) return;
         resetSession();
         setSessionPhotos(paired);
+        setTogetherRound(room?.round || 0);
         setTogetherLink(roomLink(roomId, role, token));
         await navigate({ to: "/print", replace: true });
       } catch (e) {
@@ -142,7 +158,7 @@ function SharedBooth() {
         if (!isCancelled()) setBusy(false);
       }
     },
-    [photos, roomId, role, token, navigate],
+    [photos, roomId, role, token, navigate, room?.round],
   );
   const complete = Boolean(room?.host && room.guest);
   useEffect(() => {
@@ -153,18 +169,16 @@ function SharedBooth() {
       cancelled = true;
     };
   }, [complete, manage, photos, openStrip, retry]);
-  async function startAnotherBooth() {
-    if (busy) return;
+  async function retakeStrip() {
+    if (busy || !room) return;
     setBusy(true);
     setError("");
     try {
-      const next = await roomApi<{ id: string; token: string }>("", "", "POST", {});
-      rememberRoom(next.id, next.token, "host");
-      // A new booth preserves both people's finished photos and decorations.
-      // Use a document navigation to release the old room's camera and live connection.
-      window.location.assign(roomLink(next.id, "host", next.token));
+      await roomApi<RoomView>(`/${roomId}`, token, "PATCH", { round: room.round });
+      // Preserve the room and role token; only this round's photos are reset.
+      window.location.replace(roomLink(roomId, room.role, token));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not start another booth. Try again.");
+      setError(e instanceof Error ? e.message : "Could not retake your strip. Try again.");
       setBusy(false);
     }
   }
@@ -247,7 +261,7 @@ function SharedBooth() {
             token={token}
             savedPhotos={submitted ? photos[room.role] : undefined}
             restarting={busy}
-            onStartAnother={() => void startAnotherBooth()}
+            onRetakeStrip={() => void retakeStrip()}
             partnerPhotos={room.role === "host" ? photos.guest : photos.host}
             live={live}
             name={nickname}
@@ -265,6 +279,9 @@ function SharedBooth() {
             <p className="mt-2 text-sm text-ink-soft">
               They can join with your invite, whenever they’re ready.
             </p>
+            <button className="mt-4 underline" disabled={busy} onClick={() => void retakeStrip()}>
+              Retake our strip
+            </button>
           </div>
         )}
         {!canCapture && (
@@ -351,7 +368,7 @@ function Capture({
   partnerPhotos,
   savedPhotos,
   restarting,
-  onStartAnother,
+  onRetakeStrip,
   live,
   name,
   onShared,
@@ -361,7 +378,7 @@ function Capture({
   partnerPhotos: string[];
   savedPhotos?: string[];
   restarting: boolean;
-  onStartAnother: () => void;
+  onRetakeStrip: () => void;
   live: LiveRoomHook;
   name: string;
   onShared: (room: RoomView) => void;
@@ -581,6 +598,7 @@ function Capture({
         name: name.trim() || (room.role === "host" ? "Person 1" : "Person 2"),
         photos: shots,
         submissionId: submissionId.current,
+        round: room.round,
       });
       onShared(result);
     } catch (e) {
@@ -679,7 +697,7 @@ function Capture({
   const sharedShutter =
     cameraOn && live.connected && Boolean(live.client?.other?.camera) && !complete;
   const shutterLabel = saved
-    ? "Take another strip"
+    ? "Retake our strip"
     : shooting
       ? "Taking photos"
       : complete && !cameraOn
@@ -692,7 +710,7 @@ function Capture({
               ? "Continue my photos"
               : "Take my four photos";
   const shutterText = saved
-    ? "take another strip"
+    ? "retake our strip"
     : shooting
       ? "here we go"
       : complete && !cameraOn
@@ -704,7 +722,7 @@ function Capture({
             : "press to start";
   const shutter = () => {
     if (saved) {
-      onStartAnother();
+      onRetakeStrip();
       return;
     }
     if (!cameraOn) {

@@ -223,12 +223,25 @@ test("two separate browsers create, join, recover, decorate and download a share
   await expect(guest.getByLabel("Your mirrored camera preview")).toBeVisible();
   await guest.screenshot({ path: "test-results/together-return-camera.png", fullPage: true });
   const previousRoom = new URL(invite).pathname;
-  await guest.getByRole("button", { name: "Take another strip", exact: true }).click();
-  await expect.poll(() => new URL(guest.url()).pathname).not.toBe(previousRoom);
-  await expect(guest.getByLabel("Together photo booth")).toBeVisible();
-  await expect(
-    guest.getByRole("button", { name: "Take my four photos", exact: true }),
-  ).toBeEnabled();
+  await guest.getByRole("button", { name: "Retake our strip", exact: true }).click();
+  await expect(guest).toHaveURL(
+    (url) => url.pathname === new URL(invite).pathname && url.hash === new URL(invite).hash,
+  );
+  await expect(host).toHaveURL(returnLink, { timeout: 15000 });
+  expect(new URL(guest.url()).pathname).toBe(previousRoom);
+  for (const page of [host, guest]) {
+    await expect(page.getByLabel("Together photo booth")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Review photo 1" }).locator("img")).toHaveCount(
+      0,
+    );
+  }
+  expect(await copyInvite(host)).toBe(invite);
+  await host.getByLabel("Upload four photos").setInputFiles(await photos(host, "#b83928"));
+  await host.getByRole("button", { name: "Save my half →", exact: true }).click();
+  await guest.getByLabel("Upload four photos").setInputFiles(await photos(guest, "#2762b0"));
+  await guest.getByRole("button", { name: "Save my half →", exact: true }).click();
+  await expect(host).toHaveURL(/\/print$/, { timeout: 15000 });
+  await expect(guest).toHaveURL(/\/print$/, { timeout: 15000 });
   await host.goto(returnLink);
   await expect(host).toHaveURL(/\/print$/, { timeout: 15000 });
 
@@ -448,6 +461,28 @@ test("live cameras, one synchronized countdown, shared cancellation, and guest-f
     await expect(page.getByRole("button", { name: /Review photo/ })).toHaveCount(4);
   await g.getByRole("button", { name: "Save my half →" }).click();
   await h.getByRole("button", { name: "Save my half →" }).click();
+  await expect(h).toHaveURL(/\/print$/, { timeout: 15000 });
+  await expect(g).toHaveURL(/\/print$/, { timeout: 15000 });
+  // A completed live strip can be retaken without re-inviting either person.
+  await h.getByRole("button", { name: "back to our booth", exact: true }).first().click();
+  await h.getByRole("button", { name: "Retake our strip", exact: true }).click();
+  for (const page of [h, g]) {
+    await expect(page.getByLabel("Together photo booth")).toBeVisible({ timeout: 15000 });
+    expect(new URL(page.url()).pathname).toBe(new URL(invite).pathname);
+    await expect(page.getByText("● Together live", { exact: true })).toBeVisible({
+      timeout: 40000,
+    });
+    await page.getByRole("button", { name: "I'm ready", exact: true }).click();
+  }
+  expect(await copyInvite(h)).toBe(invite);
+  await expect(h.getByRole("button", { name: "Start together", exact: true })).toBeEnabled();
+  await h.getByRole("button", { name: "Start together", exact: true }).click();
+  for (const page of [h, g]) {
+    await expect(page.getByRole("button", { name: "Save my half →", exact: true })).toBeVisible({
+      timeout: 30000,
+    });
+    await page.getByRole("button", { name: "Save my half →", exact: true }).click();
+  }
   await expect(h).toHaveURL(/\/print$/, { timeout: 15000 });
   await expect(g).toHaveURL(/\/print$/, { timeout: 15000 });
   expect(errors).toEqual([]);

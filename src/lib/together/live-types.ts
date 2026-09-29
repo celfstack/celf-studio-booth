@@ -19,6 +19,7 @@ export interface CapturePlan {
   cancelled?: boolean;
 }
 export interface SharedState {
+  round?: number;
   revision: number;
   host?: Presence;
   guest?: Presence;

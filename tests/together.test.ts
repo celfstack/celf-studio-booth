@@ -10,7 +10,7 @@ process.env.TOGETHER_LOCAL_DB = join(dir, "rooms.sqlite");
 delete process.env.VERCEL;
 delete process.env.UPSTASH_REDIS_REST_URL;
 delete process.env.KV_REST_API_URL;
-const { createRoom, readRoom, submitPhotos, removeRoom, roomResponse, readBody } =
+const { createRoom, readRoom, submitPhotos, removeRoom, retakeRoom, roomResponse, readBody } =
   await import("../src/lib/together/service.server");
 const { createValue, getValue, publish } = await import("../src/lib/together/store.server");
 import type { RoomView } from "../src/lib/together/types";
@@ -167,6 +167,36 @@ test("guest may finish before the host; shared state merges independent changes 
   await removeRoom(id, token);
   assert.equal(await getValue(`celf:together:${id}:shared`), null);
   await assert.rejects(syncRoom(id, guest, { editor: { effect: "dreamy" } }), { status: 410 });
+});
+test("retakes reuse both invitations, reset atomically, and reject delayed old-round work", async () => {
+  const { syncRoom } = await import("../src/lib/together/live.server");
+  const { id, token } = await make();
+  const initial = (await readRoom(id, token)) as RoomView;
+  const guest = initial.inviteToken!;
+  await submitPhotos(id, token, data("Host"));
+  await submitPhotos(id, guest, data("Guest"));
+  await syncRoom(id, token, { editor: { effect: "dreamy" } });
+  const results = (await Promise.all([
+    retakeRoom(id, token, { round: 0 }),
+    retakeRoom(id, guest, { round: 0 }),
+  ])) as RoomView[];
+  assert.ok(results.every((r) => r.round === 1 && !r.host && !r.guest));
+  assert.equal(((await readRoom(id, token)) as RoomView).inviteToken, guest);
+  assert.deepEqual(await readRoom(id, guest, true), { host: [], guest: [] });
+  await assert.rejects(submitPhotos(id, token, data("Late photo")), { status: 409 });
+  await assert.rejects(syncRoom(id, guest, { round: 0, editor: { effect: "dreamy" } }), {
+    status: 409,
+  });
+  // A fresh round remains usable after retries and old requests arrive.
+  await submitPhotos(id, guest, { ...data("Guest again"), round: 1 });
+  await retakeRoom(id, token, { round: 0 });
+  assert.ok(((await readRoom(id, token)) as RoomView).guest);
+  await submitPhotos(id, token, { ...data("Host again"), round: 1 });
+  const state = (await syncRoom(id, token, { round: 1 })).state;
+  assert.equal(state.round, 1);
+  assert.equal(state.editor, undefined);
+  assert.equal(state.capture, undefined);
+  await removeRoom(id, token);
 });
 test("production never falls back to local storage", async () => {
   process.env.NODE_ENV = "production";

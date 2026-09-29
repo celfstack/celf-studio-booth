@@ -43,6 +43,7 @@ const choices: Record<string, string[]> = {
 };
 const schema = z
   .object({
+    round: z.number().int().nonnegative().default(0),
     presence: z
       .object({
         instance: z.string().uuid(),
@@ -108,7 +109,9 @@ export async function syncRoom(id: string, token: string, input: unknown) {
     `celf:together:${id}:shared`,
     update,
     room.expiresAt,
+    data.round,
   );
+  if (raw === "stale") throw new RoomError(409, "A new retake has started. Return to your booth.");
   if (raw === "too-many") throw new RoomError(400, "This strip has reached its decoration limit.");
   if (raw === "missing") throw new RoomError(410, "This booth has expired or was deleted.");
   if (raw === "not-ready")

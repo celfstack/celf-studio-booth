@@ -3,6 +3,7 @@ import {
   readBody,
   readRoom,
   removeRoom,
+  retakeRoom,
   roomResponse,
   submitPhotos,
 } from "../lib/together/service.server";
@@ -16,6 +17,10 @@ export const Route = createFileRoute("/api/together/$roomId")({
       POST: ({ request, params }) =>
         roomResponse(request, async (token) =>
           submitPhotos(params.roomId, token, await readBody(request)),
+        ),
+      PATCH: ({ request, params }) =>
+        roomResponse(request, async (token) =>
+          retakeRoom(params.roomId, token, await readBody(request)),
         ),
       DELETE: ({ request, params }) =>
         roomResponse(request, (token) => removeRoom(params.roomId, token)),

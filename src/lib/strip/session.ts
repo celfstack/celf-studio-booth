@@ -14,6 +14,12 @@ interface BoothSession {
   togetherLink: string | null;
 }
 
+let togetherRound: number | null = null;
+export const getTogetherRound = () => togetherRound;
+export const setTogetherRound = (round: number) => {
+  togetherRound = round;
+};
+
 const session: BoothSession = { photos: [], strip: null, togetherLink: null };
 
 export function setSessionPhotos(photos: Array<ImageBitmap | HTMLImageElement>) {
@@ -51,6 +57,7 @@ export function getTogetherLink() {
 }
 
 export function resetSession() {
+  togetherRound = null;
   if (session.strip) URL.revokeObjectURL(session.strip.url);
   session.photos = [];
   session.strip = null;

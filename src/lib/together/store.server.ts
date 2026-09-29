@@ -77,12 +77,15 @@ export async function publish(
   value: unknown,
   expires: number,
   summary: unknown = value,
+  round = 0,
 ) {
   if (redisConfig()) {
     return command<string>([
       "EVAL",
       `
       if redis.call('EXISTS', KEYS[1]) == 0 then return 'missing' end
+      local room = cjson.decode(redis.call('GET', KEYS[1]))
+      if (room.round or 0) ~= tonumber(ARGV[5]) then return 'stale' end
       local previous = redis.call('GET', KEYS[4])
       if previous then return previous end
       redis.call('SET', KEYS[2], ARGV[1], 'PXAT', ARGV[2])
@@ -97,12 +100,16 @@ export async function publish(
       expires,
       sideKey.endsWith(":guest") ? "guest" : "host",
       JSON.stringify(summary),
+      round,
     ]);
   }
   const db = await database();
   db.exec("BEGIN IMMEDIATE");
   try {
-    if (!db.prepare("SELECT value FROM kv WHERE key = ?").get(roomKey)) return "missing";
+    const room = db.prepare("SELECT value FROM kv WHERE key = ?").get(roomKey) as
+      { value: string } | undefined;
+    if (!room) return "missing";
+    if ((JSON.parse(room.value).round || 0) !== round) return "stale";
     const previous = db.prepare("SELECT value FROM kv WHERE key = ?").get(`${sideKey}:meta`) as
       { value: string } | undefined;
     if (previous) return previous.value;
@@ -155,6 +162,7 @@ export async function mergeShared(
   stateKey: string,
   update: Record<string, unknown>,
   expires: number,
+  round = 0,
 ): Promise<string> {
   const now = Date.now();
   if (redisConfig())
@@ -165,6 +173,13 @@ export async function mergeShared(
     local raw = redis.call('GET', KEYS[2])
     local s = raw and cjson.decode(raw) or {revision=0}
     local u = cjson.decode(ARGV[1])
+    local room = cjson.decode(redis.call('GET', KEYS[1]))
+    s.round = room.round or 0
+    if (u.editor or u.start or u.cancel) and s.round ~= tonumber(ARGV[4]) then return 'stale' end
+    if s.round ~= tonumber(ARGV[4]) then
+      if u.host then u.host.ready=false end
+      if u.guest then u.guest.ready=false end
+    end
     if u.start then
       if not s.host or not s.guest or not s.host.ready or not s.guest.ready or not s.host.camera or not s.guest.camera or not s.host.connected or not s.guest.connected or s.host.seenAt < tonumber(ARGV[3])-6000 or s.guest.seenAt < tonumber(ARGV[3])-6000 then return 'not-ready' end
       if not s.capture or s.capture.cancelled or s.capture.startAt < tonumber(ARGV[3])-18000 then s.capture=u.start end
@@ -187,14 +202,23 @@ export async function mergeShared(
       JSON.stringify(update),
       expires,
       now,
+      round,
     ]);
   const db = await database();
   db.exec("BEGIN IMMEDIATE");
   try {
-    if (!db.prepare("SELECT value FROM kv WHERE key=?").get(roomKey)) return "missing";
+    const room = db.prepare("SELECT value FROM kv WHERE key=?").get(roomKey) as
+      { value: string } | undefined;
+    if (!room) return "missing";
     const row = db.prepare("SELECT value FROM kv WHERE key=?").get(stateKey) as
       { value: string } | undefined;
     const s = row ? JSON.parse(row.value) : { revision: 0 };
+    s.round = JSON.parse(room.value).round || 0;
+    if (s.round !== round) {
+      if (update.editor || update.start || update.cancel) return "stale";
+      for (const role of ["host", "guest"])
+        if (update[role]) (update[role] as { ready: boolean }).ready = false;
+    }
     if (update.start) {
       if (
         ![s.host, s.guest].every(
@@ -217,6 +241,51 @@ export async function mergeShared(
       "INSERT INTO kv VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value, expires=excluded.expires",
     ).run(stateKey, result, expires);
     return result;
+  } finally {
+    db.exec("COMMIT");
+  }
+}
+
+// Compare-and-reset keeps simultaneous retake clicks idempotent and rejects
+// photos/edits from the previous round without changing either invitation token.
+export async function resetRound(roomKey: string, expected: number) {
+  const prefix = roomKey.slice(0, -4);
+  const children = ["host", "guest", "host:meta", "guest:meta", "shared"].map(
+    (part) => prefix + part,
+  );
+  if (redisConfig())
+    return command<string>([
+      "EVAL",
+      `
+    local raw = redis.call('GET', KEYS[1])
+    if not raw then return 'missing' end
+    local room = cjson.decode(raw)
+    local round = room.round or 0
+    if round > tonumber(ARGV[1]) then return 'already' end
+    if round ~= tonumber(ARGV[1]) then return 'stale' end
+    room.round = round + 1
+    redis.call('SET', KEYS[1], cjson.encode(room), 'PXAT', room.expiresAt)
+    for i=2,#KEYS do redis.call('DEL', KEYS[i]) end
+    return 'reset'`,
+      6,
+      roomKey,
+      ...children,
+      expected,
+    ]);
+  const db = await database();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const row = db.prepare("SELECT value FROM kv WHERE key=?").get(roomKey) as
+      { value: string } | undefined;
+    if (!row) return "missing";
+    const room = JSON.parse(row.value);
+    const round = room.round || 0;
+    if (round > expected) return "already";
+    if (round !== expected) return "stale";
+    room.round = round + 1;
+    db.prepare("UPDATE kv SET value=? WHERE key=?").run(JSON.stringify(room), roomKey);
+    for (const child of children) db.prepare("DELETE FROM kv WHERE key=?").run(child);
+    return "reset";
   } finally {
     db.exec("COMMIT");
   }

@@ -1,6 +1,13 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import { createValue, deleteRoom, getValue, incrementWindow, publish } from "./store.server";
+import {
+  createValue,
+  deleteRoom,
+  getValue,
+  incrementWindow,
+  publish,
+  resetRound,
+} from "./store.server";
 import {
   MAX_PHOTO_LENGTH,
   PHOTO_HEIGHT,
@@ -56,6 +63,7 @@ function isPhoto(photo: string) {
 export const contributionSchema = z.object({
   name: nameSchema,
   submissionId: z.string().uuid(),
+  round: z.number().int().nonnegative().default(0),
   photos: z
     .array(
       z
@@ -126,6 +134,7 @@ export async function readRoom(id: string, token: string, photos = false) {
   ]);
   if (photos) return { host: host?.photos || [], guest: guest?.photos || [] };
   const view: RoomView = {
+    round: room.round || 0,
     id,
     name: room.name,
     createdAt: room.createdAt,
@@ -148,12 +157,26 @@ export async function submitPhotos(id: string, token: string, input: unknown) {
     { ...data, submittedAt },
     room.expiresAt,
     { name: data.name, submittedAt, submissionId: data.submissionId },
+    data.round,
   );
+  if (result === "stale")
+    throw new RoomError(
+      409,
+      "A new retake has started. Return to the booth to take your new photos.",
+    );
   if (result === "missing") throw new RoomError(410, "This booth has expired or was deleted.");
   if (result === "waiting")
     throw new RoomError(409, "Your person is still taking their photos. Come back in a moment.");
   if (result !== "saved" && (JSON.parse(result) as Contribution).submissionId !== data.submissionId)
     throw new RoomError(409, "This side has already been shared. Refresh to see your strip.");
+  return readRoom(id, token);
+}
+export async function retakeRoom(id: string, token: string, input: unknown) {
+  await authorize(id, token);
+  const { round } = parse(z.object({ round: z.number().int().nonnegative() }), input);
+  const result = await resetRound(key(id), round);
+  if (result === "missing") throw new RoomError(410, "This booth has expired or was deleted.");
+  if (result === "stale") throw new RoomError(409, "Refresh your booth and try again.");
   return readRoom(id, token);
 }
 export async function removeRoom(id: string, token: string) {
