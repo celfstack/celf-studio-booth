@@ -72,13 +72,13 @@ side, see saved photos and delete the room; share invitations privately.
 
 1. Link Vercel project `celf-studio-booth` in team `celfstudio`.
 2. Upstash Redis resource celf-together is connected to production, preview and development. The Free plan was selected with automatic upgrades disabled; KV_REST_API_URL/TOKEN are provisioned by Vercel.
-3. Set server-only `TURN_KEY_ID` and `TURN_API_TOKEN` for a Cloudflare Realtime TURN
-   key. The API issues one-hour relay credentials. Without these, STUN can connect
-   compatible networks, but restrictive networks may need the turn-taking flow.
+3. Cloudflare Realtime TURN is configured with server-only `TURN_KEY_ID` and
+   `TURN_API_TOKEN` secrets in Vercel production/preview and the ignored local env.
+   The API issues one-hour relay credentials to authorized room participants.
 4. Deploy, then verify the real invite on two devices on separate networks,
    including a TURN-relayed connection. Localhost invites only work on one machine.
 
-Vercel is linked/authenticated and the storage terms are accepted. Production Redis was verified with both contributions, shared edits, an atomic countdown, and cleanup. TURN relay credentials remain unconfigured; direct STUN connections and asynchronous contributions are available.
+Vercel is linked/authenticated and the storage terms are accepted. Production Redis was verified with both contributions, shared edits, an atomic countdown, and cleanup. Cloudflare TURN relay credentials are now configured. The forced-relay browser check verifies selected relay candidates and decoded incoming video on both sides, then shared capture, cancellation, reconnection and developing. Run it with `CELF_TEST_FORCE_RELAY=1 TEST_BASE_URL=https://www.celfstudiobooth.com pnpm exec playwright test tests/e2e/together.spec.ts -g "live cameras"`.
 Cloudflare reference: https://developers.cloudflare.com/realtime/turn/generate-credentials/
 
 ## Verification
