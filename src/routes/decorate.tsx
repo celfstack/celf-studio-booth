@@ -1612,8 +1612,14 @@ function Decorate() {
       <div className="mx-auto grid max-w-[1500px] gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(460px,520px)] lg:gap-5 lg:px-7 lg:py-4">
         <section className="flex min-h-[62dvh] items-center justify-center rounded-[28px] border border-ink/10 bg-[#e8e0d3] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.8)] sm:p-8 lg:sticky lg:top-24 lg:h-[calc(100dvh-8rem)]">
           {ready ? (
-            <div className="flex max-h-full max-w-full flex-col items-center gap-3">
-              <div className="relative flex min-h-0 max-h-full max-w-full">
+            <div className="flex w-full max-w-full flex-col items-center gap-3">
+              <div
+                className="relative shrink-0 max-w-full"
+                style={{
+                  width: `min(100%, calc((100dvh - 15rem) * ${format.width / format.height}))`,
+                  aspectRatio: `${format.width}/${format.height}`,
+                }}
+              >
                 <canvas
                   ref={canvasRef}
                   aria-label="Decorated photo composition preview"
@@ -1629,7 +1635,7 @@ function Decorate() {
                   onPointerLeave={() => shared.client?.cursor(null)}
                   onPointerUp={endCanvasInteraction}
                   onPointerCancel={endCanvasInteraction}
-                  className={`max-h-[calc(100dvh-12rem)] max-w-full touch-none rounded-[3px] shadow-[0_24px_70px_-25px_rgba(40,28,20,.55)] ${(!stripOnly && layout === "prints") || decorations.includes("referenceStars") || decorations.includes("bedazzle") ? "cursor-grab active:cursor-grabbing" : ""}`}
+                  className={`block h-full w-full touch-none rounded-[3px] shadow-[0_24px_70px_-25px_rgba(40,28,20,.55)] ${(!stripOnly && layout === "prints") || decorations.includes("referenceStars") || decorations.includes("bedazzle") ? "cursor-grab active:cursor-grabbing" : ""}`}
                   style={{
                     aspectRatio: `${format.width}/${format.height}`,
                     ...(stripOnly
@@ -1658,15 +1664,13 @@ function Decorate() {
                     );
                   })()}
               </div>
-              {(decorations.includes("referenceStars") ||
-                decorations.includes("bedazzle") ||
-                (!stripOnly && layout === "prints")) && (
-                <p className="font-type text-[10px] uppercase tracking-[.13em] text-ink-soft">
-                  {decorations.includes("referenceStars") || decorations.includes("bedazzle")
-                    ? "Tap a star or gem · drag to move · use the dots to resize or turn"
-                    : "Tap a print · drag to move · use the dots to resize or turn"}
-                </p>
-              )}
+              <p className="font-type h-8 shrink-0 text-center text-[10px] uppercase tracking-[.13em] text-ink-soft">
+                {decorations.includes("referenceStars") || decorations.includes("bedazzle")
+                  ? "Tap a star or gem · drag to move · use the dots to resize or turn"
+                  : !stripOnly && layout === "prints"
+                    ? "Tap a print · drag to move · use the dots to resize or turn"
+                    : null}
+              </p>
             </div>
           ) : (
             <p className="font-hand text-2xl text-ink-soft">loading...</p>

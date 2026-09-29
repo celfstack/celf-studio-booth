@@ -62,3 +62,26 @@ test("strip-only export removes paper, preserves decorations and returns to the 
   });
   expect(errors).toEqual([]);
 });
+
+test("strip preview keeps its size and proportions when finishes are toggled", async ({ page }) => {
+  await page.goto("/decorate?preview");
+  await expect(page.getByRole("button", { name: "Save image", exact: true }).first()).toBeEnabled();
+  await page.getByRole("button", { name: "Just the strip" }).click();
+  const canvas = page.getByLabel("Decorated photo composition preview");
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1280, height: 720 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const before = await canvas.boundingBox();
+    expect(before!.width / before!.height).toBeCloseTo(2160 / 4800, 2);
+    for (const finish of ["Star mix", "Bedazzle", "Lace"]) {
+      await page.getByRole("button", { name: finish, exact: true }).click();
+      const after = await canvas.boundingBox();
+      expect(after!.width).toBeCloseTo(before!.width, 0);
+      expect(after!.height).toBeCloseTo(before!.height, 0);
+      await page.getByRole("button", { name: finish, exact: true }).click();
+    }
+  }
+});
