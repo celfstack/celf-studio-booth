@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getTogetherRound } from "../strip/session";
 import { roomApi, ApiError } from "./client";
+import { startVisiblePolling } from "./poll";
 import type { Presence, RoomCredentials, SharedState, Signal, SyncResult } from "./live-types";
 export interface LiveView {
   state: SharedState;
@@ -27,7 +28,7 @@ export class LiveRoom {
   presence: Omit<Presence, "seenAt">;
   offset = 0;
   private listeners = new Set<(view: LiveView) => void>();
-  private timer?: ReturnType<typeof setTimeout>;
+  private polling?: ReturnType<typeof startVisiblePolling>;
   private queue: Promise<unknown> = Promise.resolve();
   private disposed = false;
   private stopped = false;
@@ -79,19 +80,22 @@ export class LiveRoom {
     return this.view.state[this.credentials.role === "host" ? "guest" : "host"];
   }
   get online() {
-    return Boolean(this.other && this.other.seenAt > Date.now() + this.offset - 6500);
+    return Boolean(this.other && this.other.seenAt > Date.now() + this.offset - 15_000);
   }
   start() {
-    const tick = async () => {
-      if (this.disposed || this.stopped) return;
-      try {
-        await this.update({ presence: this.presence });
-      } catch {
-        /* visible in status; retry */
-      }
-      if (!this.disposed && !this.stopped) this.timer = setTimeout(() => void tick(), 1200);
-    };
-    void tick();
+    this.polling?.stop();
+    this.polling = startVisiblePolling(() => this.update({ presence: this.presence }), {
+      stopped: () => this.disposed || this.stopped,
+      interval: () => {
+        const capture = this.view.state.capture;
+        const capturing =
+          capture && !capture.cancelled && Date.now() + this.offset < capture.startAt + 18_000;
+        // Keep camera toggles and signaling responsive while both people are
+        // present; waiting alone and idle decoration use a slower cadence.
+        if (this.presence.ready || capturing || (this.presence.camera && this.online)) return 1200;
+        return this.presence.stage === "decorate" ? 3000 : 5000;
+      },
+    });
   }
   update(update: Record<string, unknown>): Promise<SyncResult> {
     const round = this.editRound ?? (this.view.state.round || 0);
@@ -287,6 +291,7 @@ export class LiveRoom {
   setReady(ready: boolean) {
     this.presence.ready = ready;
     void this.update({ presence: this.presence }).catch(() => {});
+    if (ready) this.polling?.wake();
   }
   setCamera(stream: MediaStream | null) {
     this.stream = stream;
@@ -297,6 +302,7 @@ export class LiveRoom {
         .replaceTrack(stream?.getVideoTracks()[0] || null)
         .catch(() => this.emit({ error: "Please retry the live connection." }));
     void this.update({ presence: this.presence }).catch(() => {});
+    if (stream) this.polling?.wake();
   }
   cursor(cursor: { x: number; y: number } | null) {
     this.presence.cursor = cursor;
@@ -321,7 +327,7 @@ export class LiveRoom {
   }
   dispose() {
     this.disposed = true;
-    clearTimeout(this.timer);
+    this.polling?.stop();
     this.closePeer();
     this.listeners.clear();
   }

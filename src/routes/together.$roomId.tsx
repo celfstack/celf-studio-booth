@@ -9,6 +9,7 @@ import {
   roomLink,
 } from "../lib/together/client";
 import { useLiveRoom, type LiveRoomHook } from "../lib/together/live";
+import { startVisiblePolling } from "../lib/together/poll";
 import type { RoomPhotos, RoomView } from "../lib/together/types";
 import { decodePhoto, isSupportedPhotoFile } from "../lib/strip/render";
 import {
@@ -70,10 +71,8 @@ function SharedBooth() {
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout>;
     async function refresh() {
       try {
-        if (document.hidden) return;
         const next = await roomApi<RoomView>(`/${roomId}`, token);
         if (cancelled) return;
         if (observedRound.current !== null && next.round !== observedRound.current) {
@@ -104,14 +103,16 @@ function SharedBooth() {
           setPhotos(EMPTY_PHOTOS);
           setRoom(null);
         }
-      } finally {
-        if (!cancelled) timer = setTimeout(() => void refresh(), 7000);
+        throw e;
       }
     }
-    void refresh();
+    const polling = startVisiblePolling(refresh, {
+      interval: () => 7000,
+      stopped: () => cancelled,
+    });
     return () => {
       cancelled = true;
-      clearTimeout(timer);
+      polling.stop();
     };
   }, [roomId, token, retry]);
 

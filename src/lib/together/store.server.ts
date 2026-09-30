@@ -32,18 +32,31 @@ function redisConfig() {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
   return url && token ? { url, token } : null;
 }
+let quotaRetryAt = 0;
 async function command<T>(args: (string | number)[]): Promise<T> {
   const config = redisConfig();
   if (!config) throw new Error("Together storage is not configured");
+  // Older open tabs may still poll rapidly after a deployment. A short,
+  // per-instance cooldown also protects the provider from those retries.
+  if (Date.now() < quotaRetryAt) throw new Error("Together storage unavailable");
   const response = await fetch(config.url, {
     method: "POST",
     headers: { Authorization: `Bearer ${config.token}`, "Content-Type": "application/json" },
     body: JSON.stringify(args),
     signal: AbortSignal.timeout(12_000),
   });
-  if (!response.ok) throw new Error("Together storage unavailable");
-  const data = (await response.json()) as { result: T; error?: string };
-  if (data.error) throw new Error("Together storage unavailable");
+  const data = (await response.json().catch(() => null)) as { result: T; error?: string } | null;
+  if (!response.ok || !data || data.error) {
+    const quota =
+      typeof data?.error === "string" && /max requests limit exceeded/i.test(data.error);
+    if (quota) quotaRetryAt = Date.now() + 60_000;
+    // Never log the provider body: it can contain keys or values from commands.
+    console.warn("[together:storage] request failed", {
+      reason: quota ? "request_quota_exhausted" : "provider_unavailable",
+      status: response.status,
+    });
+    throw new Error("Together storage unavailable");
+  }
   return data.result;
 }
 export async function getValue<T>(key: string): Promise<T | null> {

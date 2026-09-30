@@ -13,12 +13,13 @@ import { renderStrip } from "../strip/render";
 import { credentialsFromLink } from "./live-types";
 import { combinePhotos, roomApi } from "./client";
 import type { RoomPhotos, RoomView } from "./types";
+import { startVisiblePolling } from "./poll";
 export function SharedSessionBoundary({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout>;
+    let polling: ReturnType<typeof startVisiblePolling> | undefined;
     const returnToBooth = (link: string) => {
       if (cancelled) return;
       resetSession();
@@ -42,18 +43,13 @@ export function SharedSessionBoundary({ children }: { children: ReactNode }) {
           }
           setTogetherRound(room.round);
           const watch = async () => {
-            try {
-              const latest = await roomApi<RoomView>(`/${credentials.id}`, credentials.token);
-              if (!cancelled && latest.round !== room.round) {
-                returnToBooth(link);
-                return;
-              }
-            } catch {
-              /* retry a transient connection failure */
+            const latest = await roomApi<RoomView>(`/${credentials.id}`, credentials.token);
+            if (!cancelled && latest.round !== room.round) {
+              returnToBooth(link);
+              polling?.stop();
             }
-            if (!cancelled) timer = setTimeout(() => void watch(), 2500);
           };
-          timer = setTimeout(() => void watch(), 2500);
+          polling = startVisiblePolling(watch, { interval: () => 5000, immediate: false });
           if (!getSessionPhotos().length) {
             const photos = await roomApi<RoomPhotos>(
               `/${credentials.id}?photos=1`,
@@ -86,7 +82,7 @@ export function SharedSessionBoundary({ children }: { children: ReactNode }) {
     void restore();
     return () => {
       cancelled = true;
-      clearTimeout(timer);
+      polling?.stop();
     };
   }, []);
   if (error)
